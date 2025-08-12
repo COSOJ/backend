@@ -6,32 +6,35 @@ export class Problem extends Document {
   @Prop({ required: true })
   code: string;
 
-  @Prop() 
+  @Prop()
   title: string;
   
-  @Prop() 
+  @Prop()
   statement: string;
 
-  @Prop() 
+  @Prop()
   difficulty: number;
 
-  @Prop() 
+  @Prop()
   timeLimitMs: number;
 
-  @Prop() 
+  @Prop()
   memoryLimitMb: number;
 
-  @Prop() 
+  @Prop()
   inputSpec: string;
 
-  @Prop() 
+  @Prop()
   outputSpec: string;
 
-  @Prop({ type: Object }) 
+  @Prop({ type: Object })
   samples: Record<string, string>[];
 
   @Prop({ default: [] })
   tags: string[];
+
+  @Prop({ type: String, enum: ['public', 'private'], default: 'private' })
+  visibility: 'public' | 'private';
 }
 
 export const ProblemSchema = SchemaFactory.createForClass(Problem);
