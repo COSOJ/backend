@@ -15,6 +15,14 @@ export class User extends Document<string> {
   @Prop() 
   avatarUrl: string;
 
+  @Prop({
+    type: [String],
+    enum: ['superadmin', 'admin', 'user', 'spectetor'],
+    default: ['user'],
+    required: true,
+  })
+  roles: Array<'superadmin' | 'admin' | 'user' | 'spectetor'>;
+
   @Prop({ default: 1500 })
   rating: number;
 
