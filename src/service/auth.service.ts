@@ -48,9 +48,11 @@ export class AuthService {
   }
 
   async generateTokens(userId: string) {
-    const payload = { userId };
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
-    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
-    return { accessToken, refreshToken };
+  const user = await this.userModel.findById(userId);
+  if (!user) throw new UnauthorizedException();
+  const payload = { userId, roles: user.roles };
+  const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
+  const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
+  return { accessToken, refreshToken };
   }
 }
