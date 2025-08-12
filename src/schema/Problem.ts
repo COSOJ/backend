@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 @Schema({ timestamps: true })
-export class Problem extends Document {
+export class Problem extends Document<string> {
   @Prop({ required: true })
   code: string;
 
