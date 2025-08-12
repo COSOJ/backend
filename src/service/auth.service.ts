@@ -20,6 +20,7 @@ export class AuthService {
       handle: dto.handle,
       email: dto.email,
       passwordHash: hashed,
+      roles: ['user'],
     });
     const tokens = await this.generateTokens(user._id);
     return { ...tokens, user };
