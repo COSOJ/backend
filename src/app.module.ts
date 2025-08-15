@@ -11,6 +11,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schema/User';
 import { Problem, ProblemSchema } from './schema/Problem';
 import { Submission, SubmissionSchema } from './schema/Submission';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { Submission, SubmissionSchema } from './schema/Submission';
     AuthService,
     ProblemService,
     SubmissionService,
+    JwtService,
   ],
 })
 export class AppModule {}
