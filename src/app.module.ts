@@ -7,9 +7,20 @@ import { SubmissionController } from './controller/submission.controller';
 import { AuthService } from './service/auth.service';
 import { ProblemService } from './service/problem.service';
 import { SubmissionService } from './service/submission.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { User, UserSchema } from './schema/User';
+import { Problem, ProblemSchema } from './schema/Problem';
+import { Submission, SubmissionSchema } from './schema/Submission';
 
 @Module({
-  imports: [],
+  imports: [
+    MongooseModule.forRoot('mongodb://localhost:27017/cosoj'),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Problem.name, schema: ProblemSchema },
+      { name: Submission.name, schema: SubmissionSchema },
+    ]),
+  ],
   controllers: [
     AppController,
     AuthController,
