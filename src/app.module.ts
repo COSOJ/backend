@@ -12,6 +12,7 @@ import { User, UserSchema } from './schema/User';
 import { Problem, ProblemSchema } from './schema/Problem';
 import { Submission, SubmissionSchema } from './schema/Submission';
 import { JwtService } from '@nestjs/jwt';
+import { SuperAdminBootstrapService } from './service/superadmin-bootstrap.service';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { JwtService } from '@nestjs/jwt';
     ProblemService,
     SubmissionService,
     JwtService,
+    SuperAdminBootstrapService,
   ],
 })
 export class AppModule {}
