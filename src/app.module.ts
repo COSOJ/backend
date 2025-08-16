@@ -11,7 +11,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schema/User';
 import { Problem, ProblemSchema } from './schema/Problem';
 import { Submission, SubmissionSchema } from './schema/Submission';
-import { JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { SuperAdminBootstrapService } from './service/superadmin-bootstrap.service';
 
 @Module({
@@ -23,6 +23,10 @@ import { SuperAdminBootstrapService } from './service/superadmin-bootstrap.servi
       { name: Problem.name, schema: ProblemSchema },
       { name: Submission.name, schema: SubmissionSchema },
     ]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'access_secret',
+      signOptions: { expiresIn: '15m' },
+    }),
   ],
   controllers: [
     AppController,
@@ -35,7 +39,6 @@ import { SuperAdminBootstrapService } from './service/superadmin-bootstrap.servi
     AuthService,
     ProblemService,
     SubmissionService,
-    JwtService,
     SuperAdminBootstrapService,
   ],
 })
