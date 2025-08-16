@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { InjectModel } from '@nestjs/mongoose';
@@ -28,8 +28,7 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.userModel.findOne({ email: dto.email });
-    const hashed = await bcrypt.hash(dto.password, 10);
-    if (!user || !(await bcrypt.compare(hashed, user.passwordHash))) {
+    if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Invalid credentials');
     }
     const tokens = await this.generateTokens(user._id);
