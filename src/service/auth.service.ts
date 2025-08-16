@@ -27,8 +27,9 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.userModel.findOne({ handle: dto.handle });
-    if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
+    const user = await this.userModel.findOne({ email: dto.email });
+    const hashed = await bcrypt.hash(dto.password, 10);
+    if (!user || !(await bcrypt.compare(hashed, user.passwordHash))) {
       throw new UnauthorizedException('Invalid credentials');
     }
     const tokens = await this.generateTokens(user._id);
