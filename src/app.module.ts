@@ -23,6 +23,7 @@ import { SuperAdminBootstrapService } from './service/superadmin-bootstrap.servi
       { name: Problem.name, schema: ProblemSchema },
       { name: Submission.name, schema: SubmissionSchema },
     ]),
+    // todo: create jwt module along w strategy
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'access_secret',
       signOptions: { expiresIn: '15m' },
