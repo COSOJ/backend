@@ -15,7 +15,8 @@ import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/cosoj'),
+    // todo: use env variable for db url, later
+    MongooseModule.forRoot('mongodb://root:mongopassword@localhost:27017/cosoj?authSource=admin'),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Problem.name, schema: ProblemSchema },
