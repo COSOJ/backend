@@ -14,6 +14,7 @@ import { Submission, SubmissionSchema } from './schema/Submission';
 import { JwtModule } from '@nestjs/jwt';
 import { SuperAdminBootstrapService } from './service/superadmin-bootstrap.service';
 import { JwtStrategy } from './guard/JwtStrategy';
+import { RefreshTokenStrategy } from './guard/RefreshTokenStrategy';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { JwtStrategy } from './guard/JwtStrategy';
     SubmissionService,
     SuperAdminBootstrapService,
     JwtStrategy,
+    RefreshTokenStrategy,
   ],
 })
 export class AppModule {}
