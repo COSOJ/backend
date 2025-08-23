@@ -16,9 +16,20 @@ export class ProblemService {
     return created;
   }
 
-  async findAll(publicOnly = true) {
-    const filter = publicOnly ? { visibility: 'public' } : {};
-    return this.problemModel.find(filter).exec();
+  async findAll(current: number = 1, pageSize: number = 5) {
+    const filter = { visibility: 'public' };
+    const skip = (current - 1) * pageSize;
+    const [items, total] = await Promise.all([
+      this.problemModel.find(filter).skip(skip).limit(pageSize).exec(),
+      this.problemModel.countDocuments(filter),
+    ]);
+    return {
+      items,
+      total,
+      current,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 
   async findOne(id: string) {
@@ -27,5 +38,21 @@ export class ProblemService {
       throw new NotFoundException('Problem not found or not public');
     }
     return problem;
+  }
+
+  async update(id: string, dto: CreateProblemDto) {
+    const updated = await this.problemModel.findByIdAndUpdate(id, dto, { new: true });
+    if (!updated) {
+      throw new NotFoundException('Problem not found');
+    }
+    return updated;
+  }
+
+  async delete(id: string) {
+    const deleted = await this.problemModel.findByIdAndDelete(id);
+    if (!deleted) {
+      throw new NotFoundException('Problem not found');
+    }
+    return deleted;
   }
 }
