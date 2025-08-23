@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Param, UseGuards, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param, UseGuards, Query, Logger } from '@nestjs/common';
 import { JwtAuthGuard } from '../guard/JwtAuthGuard';
 import { ProblemService } from 'src/service/problem.service';
 import { RolesGuard } from 'src/guard/RolesGuard';
@@ -16,9 +16,24 @@ export class ProblemController {
     return this.problemService.create(dto);
   }
 
+
+  @Put(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async update(@Param('id') id: string, @Body() dto: CreateProblemDto) {
+    return this.problemService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async delete(@Param('id') id: string) {
+    return this.problemService.delete(id);
+  }
+
   @Get()
-  async findAll(@Query('publicOnly') publicOnly: string) {
-    return this.problemService.findAll(publicOnly === 'true');
+  async findAll(@Query('current') current: number = 1, @Query('pageSize') pageSize: number = 5) {
+    return await this.problemService.findAll(current, pageSize);
   }
 
   @Get(':id')
