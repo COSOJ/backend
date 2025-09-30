@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Problem } from '../schema/Problem';
 import { CreateProblemDto } from '../dto/problem/create-problem.dto';
 
@@ -16,22 +16,28 @@ export class ProblemService {
   }
 
   /**
-   * Filter test cases based on user permissions
-   * Non-admin users only see public test cases
+   * Get MongoDB projection/aggregation pipeline for test cases based on user permissions
+   * Filters test cases at database level for better performance
    */
-  private filterTestCases(problem: any, roles: string[]): any {
-    if (!problem.cases) return problem;
-    
+  private getTestCaseProjection(roles: string[]) {
     const isAdmin = this.canViewPrivate(roles);
+    
     if (isAdmin) {
-      // Admins see all test cases
-      return problem;
+      // Admins see all test cases - no filtering needed
+      return null;
     }
     
-    // Regular users only see public test cases
-    const filteredProblem = { ...problem };
-    filteredProblem.cases = problem.cases.filter((testCase: any) => testCase.isPublic);
-    return filteredProblem;
+    // Regular users only see public test cases - filter at DB level
+    return {
+      $addFields: {
+        cases: {
+          $filter: {
+            input: '$cases',
+            cond: { $eq: ['$$this.isPublic', true] }
+          }
+        }
+      }
+    };
   }
 
   async create(dto: CreateProblemDto) {
@@ -43,23 +49,37 @@ export class ProblemService {
   }
 
   async findAll(current: number = 1, pageSize: number = 5, roles: string[] = []) {
-    let filter = { visibility: 'public' } as {};
-    if (this.canViewPrivate(roles)) {
-      filter = {};
-    }
     const skip = (current - 1) * pageSize;
-    const [items, total] = await Promise.all([
-      this.problemModel.find(filter).skip(skip).limit(pageSize).exec(),
-      this.problemModel.countDocuments(filter),
-    ]);
+    const isAdmin = this.canViewPrivate(roles);
     
-    // Filter test cases for each problem based on user permissions
-    const filteredItems = items.map(problem => 
-      this.filterTestCases(problem.toObject(), roles)
+    // Build aggregation pipeline
+    const pipeline: any[] = [
+      // Match phase: filter by visibility
+      {
+        $match: isAdmin ? {} : { visibility: 'public' }
+      }
+    ];
+    
+    // Add test case filtering for non-admin users
+    const testCaseProjection = this.getTestCaseProjection(roles);
+    if (testCaseProjection) {
+      pipeline.push(testCaseProjection);
+    }
+    
+    // Add pagination
+    pipeline.push(
+      { $skip: skip },
+      { $limit: pageSize }
     );
     
+    // Execute aggregation and count in parallel
+    const [items, total] = await Promise.all([
+      this.problemModel.aggregate(pipeline).exec(),
+      this.problemModel.countDocuments(isAdmin ? {} : { visibility: 'public' }),
+    ]);
+    
     return {
-      items: filteredItems,
+      items,
       total,
       current,
       pageSize,
@@ -68,22 +88,40 @@ export class ProblemService {
   }
 
   async findOne(id: string, roles: string[] = []) {
-    const problem = await this.problemModel.findById(id);
+    const isAdmin = this.canViewPrivate(roles);
+    
+    // Build aggregation pipeline for single document
+    const pipeline: any[] = [
+      { $match: { _id: new Types.ObjectId(id) } }
+    ];
+    
+    // Add test case filtering for non-admin users
+    const testCaseProjection = this.getTestCaseProjection(roles);
+    if (testCaseProjection) {
+      pipeline.push(testCaseProjection);
+    }
+    
+    const results = await this.problemModel.aggregate(pipeline).exec();
+    const problem = results[0];
+    
     if (!problem) {
       throw new NotFoundException('Problem not found');
     }
     
-    // Use consistent role checking method
-    if (problem.visibility !== 'public' && !this.canViewPrivate(roles)) {
+    // Check visibility permissions
+    if (problem.visibility !== 'public' && !isAdmin) {
       throw new NotFoundException('You don\'t have permission to view this problem');
     }
     
-    // Filter test cases based on user permissions
-    return this.filterTestCases(problem.toObject(), roles);
+    return problem;
   }
 
   async update(id: string, dto: CreateProblemDto) {
-    const updated = await this.problemModel.findByIdAndUpdate(id, dto, { new: true });
+    const updated = await this.problemModel.findByIdAndUpdate(
+      id, 
+      dto, 
+      { new: true, runValidators: true }
+    );
     if (!updated) {
       throw new NotFoundException('Problem not found');
     }
@@ -96,5 +134,22 @@ export class ProblemService {
       throw new NotFoundException('Problem not found');
     }
     return deleted;
+  }
+
+  /**
+   * Administrative method to get complete problem data without filtering
+   * Used for problem management and editing - requires admin privileges
+   */
+  async findOneComplete(id: string, roles: string[] = []) {
+    if (!this.canViewPrivate(roles)) {
+      throw new NotFoundException('Insufficient permissions to access complete problem data');
+    }
+    
+    const problem = await this.problemModel.findById(id);
+    if (!problem) {
+      throw new NotFoundException('Problem not found');
+    }
+    
+    return problem;
   }
 }
