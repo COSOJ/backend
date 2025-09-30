@@ -14,6 +14,7 @@ export class AuthController {
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken, user } = await this.authService.register(dto);
     res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' });
+    res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'strict' });
     return { accessToken, user };
   }
 
@@ -21,6 +22,7 @@ export class AuthController {
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken, user } = await this.authService.login(dto);
     res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' });
+    res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'strict' });
     return { accessToken, user };
   }
 
@@ -29,6 +31,7 @@ export class AuthController {
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
   const { accessToken, refreshToken } = await this.authService.refreshTokens(req.user!['userId'], req.cookies.refreshToken);
     res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' });
+    res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'strict' });
     return { accessToken };
   }
 
@@ -41,5 +44,12 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async me(@Req() req: Request) {
     return req.user;
+  }
+
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    return { message: 'Logged out successfully' };
   }
 }
