@@ -8,6 +8,13 @@ import { CreateProblemDto } from '../dto/problem/create-problem.dto';
 export class ProblemService {
   constructor(@InjectModel(Problem.name) private problemModel: Model<Problem>) {}
 
+  /**
+   * Check if user roles allow viewing private problems
+   */
+  private canViewPrivate(roles: string[]): boolean {
+    return roles.includes('admin') || roles.includes('superadmin');
+  }
+
   async create(dto: CreateProblemDto) {
     const created = await this.problemModel.create({
       ...dto,
@@ -16,8 +23,11 @@ export class ProblemService {
     return created;
   }
 
-  async findAll(current: number = 1, pageSize: number = 5) {
-    const filter = { visibility: 'public' };
+  async findAll(current: number = 1, pageSize: number = 5, roles: string[] = []) {
+    let filter = { visibility: 'public' } as {};
+    if (this.canViewPrivate(roles)) {
+      filter = {};
+    }
     const skip = (current - 1) * pageSize;
     const [items, total] = await Promise.all([
       this.problemModel.find(filter).skip(skip).limit(pageSize).exec(),
@@ -32,11 +42,17 @@ export class ProblemService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, roles: string[] = []) {
     const problem = await this.problemModel.findById(id);
-    if (!problem || (problem.visibility !== 'public' && problem.visibility !== undefined)) {
-      throw new NotFoundException('Problem not found or not public');
+    if (!problem) {
+      throw new NotFoundException('Problem not found');
     }
+    
+    // Use consistent role checking method
+    if (problem.visibility !== 'public' && !this.canViewPrivate(roles)) {
+      throw new NotFoundException('You don\'t have permission to view this problem');
+    }
+    
     return problem;
   }
 
