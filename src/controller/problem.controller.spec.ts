@@ -18,6 +18,7 @@ describe('ProblemController', () => {
     findByIdAndUpdate: jest.fn(),
     findByIdAndDelete: jest.fn(),
     countDocuments: jest.fn(),
+    aggregate: jest.fn(),
   };
 
   const mockProblemService = {
