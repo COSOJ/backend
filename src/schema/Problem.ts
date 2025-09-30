@@ -9,16 +9,16 @@ export interface TestCase {
 
 @Schema({ timestamps: true })
 export class Problem extends Document<string> {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true, index: true })
   code: string;
 
-  @Prop()
+  @Prop({ index: true })
   title: string;
   
   @Prop()
   statement: string;
 
-  @Prop()
+  @Prop({ index: true })
   difficulty: number;
 
   @Prop()
@@ -36,11 +36,16 @@ export class Problem extends Document<string> {
   @Prop({ type: [Object], default: [] })
   cases: TestCase[];
 
-  @Prop({ default: [] })
+  @Prop({ type: [String], default: [], index: true })
   tags: string[];
 
-  @Prop({ type: String, enum: ['public', 'private'], default: 'private' })
+  @Prop({ type: String, enum: ['public', 'private'], default: 'private', index: true })
   visibility: 'public' | 'private';
 }
 
 export const ProblemSchema = SchemaFactory.createForClass(Problem);
+
+// Add compound indexes for better query performance
+ProblemSchema.index({ visibility: 1, difficulty: 1 });
+ProblemSchema.index({ visibility: 1, tags: 1 });
+ProblemSchema.index({ createdAt: -1 });
