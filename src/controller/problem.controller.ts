@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Post, Put, Delete, Param, UseGuards, Query, Logger } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param, UseGuards, Query, ParseIntPipe, DefaultValuePipe, Req } from '@nestjs/common';
 import { JwtAuthGuard } from '../guard/JwtAuthGuard';
+import { OptionalJwtAuthGuard } from '../guard/OptionalJwtAuthGuard';
 import { ProblemService } from 'src/service/problem.service';
 import { RolesGuard } from 'src/guard/RolesGuard';
 import { Roles } from 'src/decorator/roles.decorator';
+import { DisableCache } from 'src/decorator/no-cache.decorator';
 import { CreateProblemDto } from 'src/dto/problem/create-problem.dto';
 
 @Controller('problems')
@@ -11,33 +13,42 @@ export class ProblemController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'superadmin')
   async create(@Body() dto: CreateProblemDto) {
     return this.problemService.create(dto);
   }
 
-
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'superadmin')
   async update(@Param('id') id: string, @Body() dto: CreateProblemDto) {
     return this.problemService.update(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'superadmin')
   async delete(@Param('id') id: string) {
     return this.problemService.delete(id);
   }
 
   @Get()
-  async findAll(@Query('current') current: number = 1, @Query('pageSize') pageSize: number = 5) {
-    return await this.problemService.findAll(current, pageSize);
+  @UseGuards(OptionalJwtAuthGuard)
+  @DisableCache()
+  async findAll(
+    @Query('current', new DefaultValuePipe(1), ParseIntPipe) current: number,
+    @Query('pageSize', new DefaultValuePipe(5), ParseIntPipe) pageSize: number,
+    @Req() req
+  ) {
+    const roles = req.user?.roles || [];
+    return await this.problemService.findAll(current, pageSize, roles);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.problemService.findOne(id);
+  @UseGuards(OptionalJwtAuthGuard)
+  @DisableCache()
+  async findOne(@Param('id') id: string, @Req() req) {
+    const roles = req.user?.roles || [];
+    return this.problemService.findOne(id, roles);
   }
 }
