@@ -15,6 +15,25 @@ export class ProblemService {
     return roles.includes('admin') || roles.includes('superadmin');
   }
 
+  /**
+   * Filter test cases based on user permissions
+   * Non-admin users only see public test cases
+   */
+  private filterTestCases(problem: any, roles: string[]): any {
+    if (!problem.cases) return problem;
+    
+    const isAdmin = this.canViewPrivate(roles);
+    if (isAdmin) {
+      // Admins see all test cases
+      return problem;
+    }
+    
+    // Regular users only see public test cases
+    const filteredProblem = { ...problem };
+    filteredProblem.cases = problem.cases.filter((testCase: any) => testCase.isPublic);
+    return filteredProblem;
+  }
+
   async create(dto: CreateProblemDto) {
     const created = await this.problemModel.create({
       ...dto,
@@ -33,8 +52,14 @@ export class ProblemService {
       this.problemModel.find(filter).skip(skip).limit(pageSize).exec(),
       this.problemModel.countDocuments(filter),
     ]);
+    
+    // Filter test cases for each problem based on user permissions
+    const filteredItems = items.map(problem => 
+      this.filterTestCases(problem.toObject(), roles)
+    );
+    
     return {
-      items,
+      items: filteredItems,
       total,
       current,
       pageSize,
@@ -53,7 +78,8 @@ export class ProblemService {
       throw new NotFoundException('You don\'t have permission to view this problem');
     }
     
-    return problem;
+    // Filter test cases based on user permissions
+    return this.filterTestCases(problem.toObject(), roles);
   }
 
   async update(id: string, dto: CreateProblemDto) {
