@@ -1,4 +1,10 @@
-import { IsString, IsArray, IsOptional, IsNumber, IsObject } from 'class-validator';
+import { IsString, IsArray, IsOptional, IsNumber, IsObject, IsBoolean } from 'class-validator';
+
+export interface TestCaseDto {
+  input: string;
+  output: string;
+  isPublic: boolean;
+}
 
 export class CreateProblemDto {
   @IsString()
@@ -27,7 +33,7 @@ export class CreateProblemDto {
 
   @IsArray()
   @IsObject({ each: true })
-  samples: Record<string, string>[];
+  cases: TestCaseDto[];
 
   @IsArray()
   @IsString({ each: true })
