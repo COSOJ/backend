@@ -1,10 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { FileReference } from './Submission';
 
 export interface TestCase {
-  input: string;
-  output: string;
   isPublic: boolean; // true for visible to users, false for hidden test cases
+  inputFile?: FileReference; // File reference for input
+  outputFile?: FileReference; // File reference for output
+  // Keep legacy fields for backward compatibility
+  input?: string;
+  output?: string;
 }
 
 @Schema({ timestamps: true })
@@ -33,7 +37,32 @@ export class Problem extends Document<string> {
   @Prop()
   outputSpec: string;
 
-  @Prop({ type: [Object], default: [] })
+  @Prop({ 
+    type: [{
+      isPublic: { type: Boolean, required: true },
+      inputFile: {
+        bucket: String,
+        key: String,
+        originalName: String,
+        mimeType: String,
+        size: Number,
+        uploadedAt: Date
+      },
+      outputFile: {
+        bucket: String,
+        key: String,
+        originalName: String,
+        mimeType: String,
+        size: Number,
+        uploadedAt: Date
+      },
+      // todo: we will remove these fields in future, before major release
+      // Legacy fields for backward compatibility
+      input: String,
+      output: String
+    }], 
+    default: [] 
+  })
   cases: TestCase[];
 
   @Prop({ type: [String], default: [], index: true })
