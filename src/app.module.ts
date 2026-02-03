@@ -15,20 +15,19 @@ import { JwtModule } from '@nestjs/jwt';
 import { SuperAdminBootstrapService } from './service/superadmin-bootstrap.service';
 import { JwtStrategy } from './guard/JwtStrategy';
 import { RefreshTokenStrategy } from './guard/RefreshTokenStrategy';
+import { appConfig } from './config/app.config';
 
 @Module({
   imports: [
-    // todo: use env variable for db url, later
-    MongooseModule.forRoot('mongodb://root:mongopassword@localhost:27017/cosoj?authSource=admin'),
+    MongooseModule.forRoot(appConfig.database.uri),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Problem.name, schema: ProblemSchema },
       { name: Submission.name, schema: SubmissionSchema },
     ]),
-    // todo: create jwt module along w strategy
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'access_secret',
-      signOptions: { expiresIn: '15m' },
+      secret: appConfig.jwt.secret,
+      signOptions: { expiresIn: appConfig.jwt.expiresIn },
     }),
   ],
   controllers: [
