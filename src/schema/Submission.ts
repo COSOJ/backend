@@ -20,6 +20,15 @@ export enum ProgrammingLanguage {
   C = 'c'
 }
 
+export interface FileReference {
+  bucket: string;
+  key: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  uploadedAt: Date;
+}
+
 @Schema({ timestamps: true })
 export class Submission extends Document<string> {
   @Prop({ type: 'ObjectId', ref: 'User', required: true, index: true })
@@ -40,8 +49,18 @@ export class Submission extends Document<string> {
   @Prop({ type: Number, default: 0 })
   memoryUsedKb: number;
 
-  @Prop({ required: true })
-  code: string;
+  @Prop({
+    type: {
+      bucket: { type: String, required: true },
+      key: { type: String, required: true },
+      originalName: { type: String, required: true },
+      mimeType: { type: String, required: true },
+      size: { type: Number, required: true },
+      uploadedAt: { type: Date, required: true }
+    },
+    required: true
+  })
+  sourceFile: FileReference;
 
   @Prop()
   errorMessage?: string;
