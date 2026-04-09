@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsNumber, MaxLength, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsOptional,
+  IsNumber,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { ProgrammingLanguage } from '../../schema/Submission';
 
 export class CreateSubmissionDto {

@@ -12,7 +12,7 @@ export class User extends Document<string> {
   @Prop() // hashed password
   passwordHash: string;
 
-  @Prop() 
+  @Prop()
   avatarUrl: string;
 
   @Prop({

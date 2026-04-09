@@ -6,7 +6,9 @@ import { CreateProblemDto } from '../dto/problem/create-problem.dto';
 
 @Injectable()
 export class ProblemService {
-  constructor(@InjectModel(Problem.name) private problemModel: Model<Problem>) {}
+  constructor(
+    @InjectModel(Problem.name) private problemModel: Model<Problem>,
+  ) {}
 
   /**
    * Check if user roles allow viewing private problems
@@ -21,22 +23,22 @@ export class ProblemService {
    */
   private getTestCaseProjection(roles: string[]) {
     const isAdmin = this.canViewPrivate(roles);
-    
+
     if (isAdmin) {
       // Admins see all test cases - no filtering needed
       return null;
     }
-    
+
     // Regular users only see public test cases - filter at DB level
     return {
       $addFields: {
         cases: {
           $filter: {
             input: '$cases',
-            cond: { $eq: ['$$this.isPublic', true] }
-          }
-        }
-      }
+            cond: { $eq: ['$$this.isPublic', true] },
+          },
+        },
+      },
     };
   }
 
@@ -48,36 +50,37 @@ export class ProblemService {
     return created;
   }
 
-  async findAll(current: number = 1, pageSize: number = 5, roles: string[] = []) {
+  async findAll(
+    current: number = 1,
+    pageSize: number = 5,
+    roles: string[] = [],
+  ) {
     const skip = (current - 1) * pageSize;
     const isAdmin = this.canViewPrivate(roles);
-    
+
     // Build aggregation pipeline
     const pipeline: any[] = [
       // Match phase: filter by visibility
       {
-        $match: isAdmin ? {} : { visibility: 'public' }
-      }
+        $match: isAdmin ? {} : { visibility: 'public' },
+      },
     ];
-    
+
     // Add test case filtering for non-admin users
     const testCaseProjection = this.getTestCaseProjection(roles);
     if (testCaseProjection) {
       pipeline.push(testCaseProjection);
     }
-    
+
     // Add pagination
-    pipeline.push(
-      { $skip: skip },
-      { $limit: pageSize }
-    );
-    
+    pipeline.push({ $skip: skip }, { $limit: pageSize });
+
     // Execute aggregation and count in parallel
     const [items, total] = await Promise.all([
       this.problemModel.aggregate(pipeline).exec(),
       this.problemModel.countDocuments(isAdmin ? {} : { visibility: 'public' }),
     ]);
-    
+
     return {
       items,
       total,
@@ -89,39 +92,38 @@ export class ProblemService {
 
   async findOne(id: string, roles: string[] = []) {
     const isAdmin = this.canViewPrivate(roles);
-    
+
     // Build aggregation pipeline for single document
-    const pipeline: any[] = [
-      { $match: { _id: new Types.ObjectId(id) } }
-    ];
-    
+    const pipeline: any[] = [{ $match: { _id: new Types.ObjectId(id) } }];
+
     // Add test case filtering for non-admin users
     const testCaseProjection = this.getTestCaseProjection(roles);
     if (testCaseProjection) {
       pipeline.push(testCaseProjection);
     }
-    
+
     const results = await this.problemModel.aggregate(pipeline).exec();
     const problem = results[0];
-    
+
     if (!problem) {
       throw new NotFoundException('Problem not found');
     }
-    
+
     // Check visibility permissions
     if (problem.visibility !== 'public' && !isAdmin) {
-      throw new NotFoundException('You don\'t have permission to view this problem');
+      throw new NotFoundException(
+        "You don't have permission to view this problem",
+      );
     }
-    
+
     return problem;
   }
 
   async update(id: string, dto: CreateProblemDto) {
-    const updated = await this.problemModel.findByIdAndUpdate(
-      id, 
-      dto, 
-      { new: true, runValidators: true }
-    );
+    const updated = await this.problemModel.findByIdAndUpdate(id, dto, {
+      new: true,
+      runValidators: true,
+    });
     if (!updated) {
       throw new NotFoundException('Problem not found');
     }
@@ -142,14 +144,16 @@ export class ProblemService {
    */
   async findOneComplete(id: string, roles: string[] = []) {
     if (!this.canViewPrivate(roles)) {
-      throw new NotFoundException('Insufficient permissions to access complete problem data');
+      throw new NotFoundException(
+        'Insufficient permissions to access complete problem data',
+      );
     }
-    
+
     const problem = await this.problemModel.findById(id);
     if (!problem) {
       throw new NotFoundException('Problem not found');
     }
-    
+
     return problem;
   }
 }

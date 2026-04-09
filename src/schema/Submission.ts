@@ -3,13 +3,13 @@ import { Document } from 'mongoose';
 
 export enum SubmissionVerdict {
   PENDING = 'pending',
-  ACCEPTED = 'accepted', 
+  ACCEPTED = 'accepted',
   WRONG_ANSWER = 'wrong_answer',
   TIME_LIMIT_EXCEEDED = 'time_limit_exceeded',
   MEMORY_LIMIT_EXCEEDED = 'memory_limit_exceeded',
   RUNTIME_ERROR = 'runtime_error',
   COMPILATION_ERROR = 'compilation_error',
-  SYSTEM_ERROR = 'system_error'
+  SYSTEM_ERROR = 'system_error',
 }
 
 export enum ProgrammingLanguage {
@@ -17,7 +17,7 @@ export enum ProgrammingLanguage {
   JAVA = 'java',
   PYTHON = 'python',
   JAVASCRIPT = 'javascript',
-  C = 'c'
+  C = 'c',
 }
 
 export interface FileReference {
@@ -37,10 +37,20 @@ export class Submission extends Document<string> {
   @Prop({ type: 'ObjectId', ref: 'Problem', required: true, index: true })
   problem: string;
 
-  @Prop({ type: String, enum: Object.values(ProgrammingLanguage), required: true, index: true })
+  @Prop({
+    type: String,
+    enum: Object.values(ProgrammingLanguage),
+    required: true,
+    index: true,
+  })
   language: ProgrammingLanguage;
-  
-  @Prop({ type: String, enum: Object.values(SubmissionVerdict), default: SubmissionVerdict.PENDING, index: true })
+
+  @Prop({
+    type: String,
+    enum: Object.values(SubmissionVerdict),
+    default: SubmissionVerdict.PENDING,
+    index: true,
+  })
   verdict: SubmissionVerdict;
 
   @Prop({ type: Number, default: 0 })
@@ -56,9 +66,9 @@ export class Submission extends Document<string> {
       originalName: { type: String, required: true },
       mimeType: { type: String, required: true },
       size: { type: Number, required: true },
-      uploadedAt: { type: Date, required: true }
+      uploadedAt: { type: Date, required: true },
     },
-    required: true
+    required: true,
   })
   sourceFile: FileReference;
 

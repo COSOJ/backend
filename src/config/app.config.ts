@@ -1,11 +1,14 @@
 export const appConfig = {
   database: {
-    uri: process.env.MONGODB_URI || 'mongodb://root:mongopassword@localhost:27017/cosoj?authSource=admin',
+    uri:
+      process.env.MONGODB_URI ||
+      'mongodb://root:mongopassword@localhost:27017/cosoj?authSource=admin',
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'development-secret-key',
     expiresIn: process.env.JWT_EXPIRES_IN || '1h',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'development-refresh-secret-key',
+    refreshSecret:
+      process.env.JWT_REFRESH_SECRET || 'development-refresh-secret-key',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
   app: {

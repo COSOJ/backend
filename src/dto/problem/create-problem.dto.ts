@@ -1,4 +1,11 @@
-import { IsString, IsArray, IsOptional, IsNumber, IsObject, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  IsOptional,
+  IsNumber,
+  IsObject,
+  IsBoolean,
+} from 'class-validator';
 
 export interface TestCaseDto {
   input: string;

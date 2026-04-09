@@ -1,14 +1,14 @@
-import { 
-  Controller, 
-  Get, 
-  Param, 
-  Res, 
-  UseGuards, 
+import {
+  Controller,
+  Get,
+  Param,
+  Res,
+  UseGuards,
   Logger,
   NotFoundException,
   ForbiddenException,
   HttpException,
-  HttpStatus
+  HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { FileStorageService } from '../service/file-storage.service';
@@ -28,7 +28,7 @@ export class FileController {
   constructor(
     private readonly fileStorageService: FileStorageService,
     private readonly submissionService: SubmissionService,
-    private readonly problemService: ProblemService
+    private readonly problemService: ProblemService,
   ) {}
 
   /**
@@ -39,10 +39,14 @@ export class FileController {
   async getSubmissionSource(
     @Param('submissionId') submissionId: string,
     @CurrentUser() user: User | undefined,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     try {
-      const submission = await this.submissionService.findOne(submissionId, user?._id, user?.roles || []);
+      const submission = await this.submissionService.findOne(
+        submissionId,
+        user?._id,
+        user?.roles || [],
+      );
       if (!submission) {
         throw new NotFoundException('Submission not found');
       }
@@ -54,24 +58,30 @@ export class FileController {
 
       const fileStream = await this.fileStorageService.getFileStream(
         submission.sourceFile.bucket,
-        submission.sourceFile.key
+        submission.sourceFile.key,
       );
 
       res.setHeader('Content-Type', submission.sourceFile.mimeType);
-      res.setHeader('Content-Disposition', `inline; filename="${submission.sourceFile.originalName}"`);
+      res.setHeader(
+        'Content-Disposition',
+        `inline; filename="${submission.sourceFile.originalName}"`,
+      );
       res.setHeader('Cache-Control', 'private, max-age=3600');
 
       fileStream.pipe(res);
     } catch (error) {
-      this.logger.error(`Failed to get submission source for ${submissionId}`, error);
-      
+      this.logger.error(
+        `Failed to get submission source for ${submissionId}`,
+        error,
+      );
+
       if (error instanceof HttpException) {
         throw error;
       }
-      
+
       throw new HttpException(
         'Failed to retrieve file',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -85,10 +95,13 @@ export class FileController {
     @Param('problemId') problemId: string,
     @Param('index') index: string,
     @CurrentUser() user: User | undefined,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     try {
-      const problem = await this.problemService.findOne(problemId, user?.roles || []);
+      const problem = await this.problemService.findOne(
+        problemId,
+        user?.roles || [],
+      );
       if (!problem) {
         throw new NotFoundException('Problem not found');
       }
@@ -99,7 +112,7 @@ export class FileController {
       }
 
       const testCase = problem.cases[testCaseIndex];
-      
+
       // Check access permissions
       if (!testCase.isPublic && !this.isAdminUser(user)) {
         throw new ForbiddenException('Access denied to private test case');
@@ -108,11 +121,11 @@ export class FileController {
       // Handle both file reference and legacy string storage
       let content: string;
       let filename: string;
-      
+
       if (testCase.inputFile) {
         const fileBuffer = await this.fileStorageService.getFile(
           testCase.inputFile.bucket,
-          testCase.inputFile.key
+          testCase.inputFile.key,
         );
         content = fileBuffer.toString('utf-8');
         filename = testCase.inputFile.originalName;
@@ -128,15 +141,18 @@ export class FileController {
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.send(content);
     } catch (error) {
-      this.logger.error(`Failed to get test case input for ${problemId}:${index}`, error);
-      
+      this.logger.error(
+        `Failed to get test case input for ${problemId}:${index}`,
+        error,
+      );
+
       if (error instanceof HttpException) {
         throw error;
       }
-      
+
       throw new HttpException(
         'Failed to retrieve file',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -150,10 +166,13 @@ export class FileController {
     @Param('problemId') problemId: string,
     @Param('index') index: string,
     @CurrentUser() user: User | undefined,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     try {
-      const problem = await this.problemService.findOne(problemId, user?.roles || []);
+      const problem = await this.problemService.findOne(
+        problemId,
+        user?.roles || [],
+      );
       if (!problem) {
         throw new NotFoundException('Problem not found');
       }
@@ -164,7 +183,7 @@ export class FileController {
       }
 
       const testCase = problem.cases[testCaseIndex];
-      
+
       // Check access permissions
       if (!testCase.isPublic && !this.isAdminUser(user)) {
         throw new ForbiddenException('Access denied to private test case');
@@ -173,11 +192,11 @@ export class FileController {
       // Handle both file reference and legacy string storage
       let content: string;
       let filename: string;
-      
+
       if (testCase.outputFile) {
         const fileBuffer = await this.fileStorageService.getFile(
           testCase.outputFile.bucket,
-          testCase.outputFile.key
+          testCase.outputFile.key,
         );
         content = fileBuffer.toString('utf-8');
         filename = testCase.outputFile.originalName;
@@ -193,15 +212,18 @@ export class FileController {
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.send(content);
     } catch (error) {
-      this.logger.error(`Failed to get test case output for ${problemId}:${index}`, error);
-      
+      this.logger.error(
+        `Failed to get test case output for ${problemId}:${index}`,
+        error,
+      );
+
       if (error instanceof HttpException) {
         throw error;
       }
-      
+
       throw new HttpException(
         'Failed to retrieve file',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -213,10 +235,14 @@ export class FileController {
   async downloadSubmissionSource(
     @Param('submissionId') submissionId: string,
     @CurrentUser() user: User | undefined,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     try {
-      const submission = await this.submissionService.findOne(submissionId, user?._id, user?.roles || []);
+      const submission = await this.submissionService.findOne(
+        submissionId,
+        user?._id,
+        user?.roles || [],
+      );
       if (!submission) {
         throw new NotFoundException('Submission not found');
       }
@@ -228,23 +254,29 @@ export class FileController {
 
       const fileStream = await this.fileStorageService.getFileStream(
         submission.sourceFile.bucket,
-        submission.sourceFile.key
+        submission.sourceFile.key,
       );
 
       res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename="${submission.sourceFile.originalName}"`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${submission.sourceFile.originalName}"`,
+      );
 
       fileStream.pipe(res);
     } catch (error) {
-      this.logger.error(`Failed to download submission source for ${submissionId}`, error);
-      
+      this.logger.error(
+        `Failed to download submission source for ${submissionId}`,
+        error,
+      );
+
       if (error instanceof HttpException) {
         throw error;
       }
-      
+
       throw new HttpException(
         'Failed to download file',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -252,7 +284,10 @@ export class FileController {
   /**
    * Check if user can access a submission
    */
-  private canAccessSubmission(submission: any, user: User | undefined): boolean {
+  private canAccessSubmission(
+    submission: any,
+    user: User | undefined,
+  ): boolean {
     if (!user) {
       return false; // No access for anonymous users
     }
@@ -270,6 +305,10 @@ export class FileController {
    * Check if user is admin
    */
   private isAdminUser(user: User | undefined): boolean {
-    return user?.roles?.includes('admin') || user?.roles?.includes('superadmin') || false;
+    return (
+      user?.roles?.includes('admin') ||
+      user?.roles?.includes('superadmin') ||
+      false
+    );
   }
 }

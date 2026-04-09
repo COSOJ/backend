@@ -45,7 +45,7 @@ export class FileStorageService implements OnModuleInit {
   private async initializeBuckets(): Promise<void> {
     try {
       const buckets = Object.values(appConfig.minio.buckets);
-      
+
       for (const bucket of buckets) {
         const exists = await this.minioClient.bucketExists(bucket);
         if (!exists) {
@@ -67,12 +67,12 @@ export class FileStorageService implements OnModuleInit {
           },
         ],
       };
-      
+
       await this.minioClient.setBucketPolicy(
         attachmentsBucket,
-        JSON.stringify(policy)
+        JSON.stringify(policy),
       );
-      
+
       this.logger.log('MinIO buckets initialized successfully');
     } catch (error) {
       this.logger.error('Failed to initialize MinIO buckets', error);
@@ -88,7 +88,7 @@ export class FileStorageService implements OnModuleInit {
     originalName: string,
     mimeType: string,
     bucket: string,
-    prefix?: string
+    prefix?: string,
   ): Promise<UploadResult> {
     try {
       // Validate file type
@@ -98,14 +98,16 @@ export class FileStorageService implements OnModuleInit {
 
       // Validate file size
       if (buffer.length > appConfig.file.maxSize) {
-        throw new Error(`File size exceeds maximum allowed size of ${appConfig.file.maxSize} bytes`);
+        throw new Error(
+          `File size exceeds maximum allowed size of ${appConfig.file.maxSize} bytes`,
+        );
       }
 
       const fileExtension = this.getFileExtension(originalName);
       const key = `${prefix ? prefix + '/' : ''}${uuidv4()}${fileExtension}`;
-      
+
       const stream = Readable.from(buffer);
-      
+
       const uploadInfo = await this.minioClient.putObject(
         bucket,
         key,
@@ -115,7 +117,7 @@ export class FileStorageService implements OnModuleInit {
           'Content-Type': mimeType,
           'Original-Name': originalName,
           'Upload-Date': new Date().toISOString(),
-        }
+        },
       );
 
       const url = await this.getFileUrl(bucket, key);
@@ -149,17 +151,17 @@ export class FileStorageService implements OnModuleInit {
   async uploadSubmissionFile(
     code: string,
     language: string,
-    submissionId: string
+    submissionId: string,
   ): Promise<UploadResult> {
     const fileName = `submission-${submissionId}.${this.getLanguageExtension(language)}`;
     const buffer = Buffer.from(code, 'utf-8');
-    
+
     return this.uploadFile(
       buffer,
       fileName,
       'text/plain',
       appConfig.minio.buckets.submissions,
-      'source-code'
+      'source-code',
     );
   }
 
@@ -170,17 +172,17 @@ export class FileStorageService implements OnModuleInit {
     content: string,
     type: 'input' | 'output',
     problemId: string,
-    testCaseIndex: number
+    testCaseIndex: number,
   ): Promise<UploadResult> {
     const fileName = `${problemId}-test-${testCaseIndex}-${type}.txt`;
     const buffer = Buffer.from(content, 'utf-8');
-    
+
     return this.uploadFile(
       buffer,
       fileName,
       'text/plain',
       appConfig.minio.buckets.testCases,
-      problemId
+      problemId,
     );
   }
 
@@ -191,14 +193,17 @@ export class FileStorageService implements OnModuleInit {
     try {
       const stream = await this.minioClient.getObject(bucket, key);
       const chunks: Buffer[] = [];
-      
+
       return new Promise((resolve, reject) => {
         stream.on('data', (chunk) => chunks.push(chunk));
         stream.on('end', () => resolve(Buffer.concat(chunks)));
         stream.on('error', reject);
       });
     } catch (error) {
-      this.logger.error(`Failed to get file ${key} from bucket ${bucket}`, error);
+      this.logger.error(
+        `Failed to get file ${key} from bucket ${bucket}`,
+        error,
+      );
       throw error;
     }
   }
@@ -206,11 +211,17 @@ export class FileStorageService implements OnModuleInit {
   /**
    * Get file as stream
    */
-  async getFileStream(bucket: string, key: string): Promise<NodeJS.ReadableStream> {
+  async getFileStream(
+    bucket: string,
+    key: string,
+  ): Promise<NodeJS.ReadableStream> {
     try {
       return await this.minioClient.getObject(bucket, key);
     } catch (error) {
-      this.logger.error(`Failed to get file stream ${key} from bucket ${bucket}`, error);
+      this.logger.error(
+        `Failed to get file stream ${key} from bucket ${bucket}`,
+        error,
+      );
       throw error;
     }
   }
@@ -222,7 +233,10 @@ export class FileStorageService implements OnModuleInit {
     try {
       return await this.minioClient.statObject(bucket, key);
     } catch (error) {
-      this.logger.error(`Failed to get file metadata ${key} from bucket ${bucket}`, error);
+      this.logger.error(
+        `Failed to get file metadata ${key} from bucket ${bucket}`,
+        error,
+      );
       throw error;
     }
   }
@@ -233,9 +247,14 @@ export class FileStorageService implements OnModuleInit {
   async deleteFile(bucket: string, key: string): Promise<void> {
     try {
       await this.minioClient.removeObject(bucket, key);
-      this.logger.log(`File deleted successfully: ${key} from bucket ${bucket}`);
+      this.logger.log(
+        `File deleted successfully: ${key} from bucket ${bucket}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to delete file ${key} from bucket ${bucket}`, error);
+      this.logger.error(
+        `Failed to delete file ${key} from bucket ${bucket}`,
+        error,
+      );
       throw error;
     }
   }
@@ -243,11 +262,18 @@ export class FileStorageService implements OnModuleInit {
   /**
    * Generate a presigned URL for file access
    */
-  async getFileUrl(bucket: string, key: string, expiry = 24 * 60 * 60): Promise<string> {
+  async getFileUrl(
+    bucket: string,
+    key: string,
+    expiry = 24 * 60 * 60,
+  ): Promise<string> {
     try {
       return await this.minioClient.presignedGetObject(bucket, key, expiry);
     } catch (error) {
-      this.logger.error(`Failed to generate URL for ${key} in bucket ${bucket}`, error);
+      this.logger.error(
+        `Failed to generate URL for ${key} in bucket ${bucket}`,
+        error,
+      );
       throw error;
     }
   }
@@ -265,13 +291,13 @@ export class FileStorageService implements OnModuleInit {
    */
   private getLanguageExtension(language: string): string {
     const extensions = {
-      'cpp': 'cpp',
-      'c': 'c',
-      'java': 'java',
-      'python': 'py',
-      'javascript': 'js',
+      cpp: 'cpp',
+      c: 'c',
+      java: 'java',
+      python: 'py',
+      javascript: 'js',
     };
-    
+
     return extensions[language] || 'txt';
   }
 

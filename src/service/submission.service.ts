@@ -1,8 +1,16 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Submission, SubmissionVerdict } from '../schema/Submission';
-import { CreateSubmissionDto, SubmissionQueryDto } from '../dto/submission/create-submission.dto';
+import {
+  CreateSubmissionDto,
+  SubmissionQueryDto,
+} from '../dto/submission/create-submission.dto';
 import { FileStorageService } from './file-storage.service';
 
 export interface SubmissionListResponse {
@@ -17,14 +25,20 @@ export interface SubmissionListResponse {
 export class SubmissionService {
   constructor(
     @InjectModel(Submission.name) private submissionModel: Model<Submission>,
-    private readonly fileStorageService: FileStorageService
+    private readonly fileStorageService: FileStorageService,
   ) {}
 
   /**
    * Check if user can view submission based on roles and ownership
    */
-  private canViewSubmission(submission: any, userId: string, roles: string[] = []): boolean {
-    const isOwner = submission.user._id?.toString() === userId || submission.user.toString() === userId;
+  private canViewSubmission(
+    submission: any,
+    userId: string,
+    roles: string[] = [],
+  ): boolean {
+    const isOwner =
+      submission.user._id?.toString() === userId ||
+      submission.user.toString() === userId;
     const isAdmin = roles.includes('admin') || roles.includes('superadmin');
     return isOwner || isAdmin;
   }
@@ -43,7 +57,7 @@ export class SubmissionService {
       const uploadResult = await this.fileStorageService.uploadSubmissionFile(
         dto.code,
         dto.language,
-        new Types.ObjectId().toString() // Generate temporary ID for filename
+        new Types.ObjectId().toString(), // Generate temporary ID for filename
       );
 
       const created = await this.submissionModel.create({
@@ -67,21 +81,37 @@ export class SubmissionService {
 
       if (!populatedSubmission) {
         // Clean up uploaded file if submission creation failed
-        await this.fileStorageService.deleteFile(uploadResult.bucket, uploadResult.key);
+        await this.fileStorageService.deleteFile(
+          uploadResult.bucket,
+          uploadResult.key,
+        );
         throw new Error('Failed to create submission');
       }
 
       return populatedSubmission;
     } catch (error) {
-      throw new BadRequestException(`Failed to create submission: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to create submission: ${error.message}`,
+      );
     }
   }
 
   /**
    * Get submissions with filtering and pagination
    */
-  async findAll(query: SubmissionQueryDto, requestUserId?: string, roles: string[] = []): Promise<SubmissionListResponse> {
-    const { current = 1, pageSize = 10, user, problem, language, verdict } = query;
+  async findAll(
+    query: SubmissionQueryDto,
+    requestUserId?: string,
+    roles: string[] = [],
+  ): Promise<SubmissionListResponse> {
+    const {
+      current = 1,
+      pageSize = 10,
+      user,
+      problem,
+      language,
+      verdict,
+    } = query;
     const skip = (current - 1) * pageSize;
 
     // Build filter
@@ -122,7 +152,11 @@ export class SubmissionService {
   /**
    * Get submissions by problem with user filtering
    */
-  async findByProblem(problemId: string, requestUserId?: string, roles: string[] = []): Promise<Submission[]> {
+  async findByProblem(
+    problemId: string,
+    requestUserId?: string,
+    roles: string[] = [],
+  ): Promise<Submission[]> {
     if (!Types.ObjectId.isValid(problemId)) {
       throw new BadRequestException('Invalid problem ID');
     }
@@ -146,7 +180,11 @@ export class SubmissionService {
   /**
    * Get submissions by user with access control
    */
-  async findByUser(userId: string, requestUserId?: string, roles: string[] = []): Promise<Submission[]> {
+  async findByUser(
+    userId: string,
+    requestUserId?: string,
+    roles: string[] = [],
+  ): Promise<Submission[]> {
     if (!Types.ObjectId.isValid(userId)) {
       throw new BadRequestException('Invalid user ID');
     }
@@ -156,7 +194,9 @@ export class SubmissionService {
 
     // Only admins and owners can view user submissions
     if (!isAdmin && !isOwner) {
-      throw new ForbiddenException('Access denied: Cannot view other users\' submissions');
+      throw new ForbiddenException(
+        "Access denied: Cannot view other users' submissions",
+      );
     }
 
     return this.submissionModel
@@ -170,7 +210,11 @@ export class SubmissionService {
   /**
    * Get single submission with access control
    */
-  async findOne(id: string, requestUserId?: string, roles: string[] = []): Promise<Submission> {
+  async findOne(
+    id: string,
+    requestUserId?: string,
+    roles: string[] = [],
+  ): Promise<Submission> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid submission ID');
     }
@@ -187,7 +231,9 @@ export class SubmissionService {
 
     // Check access permissions
     if (!this.canViewSubmission(submission, requestUserId || '', roles)) {
-      throw new ForbiddenException('Access denied: Cannot view this submission');
+      throw new ForbiddenException(
+        'Access denied: Cannot view this submission',
+      );
     }
 
     return submission;
@@ -196,13 +242,17 @@ export class SubmissionService {
   /**
    * Get submission source code content
    */
-  async getSourceCode(id: string, requestUserId?: string, roles: string[] = []): Promise<string> {
+  async getSourceCode(
+    id: string,
+    requestUserId?: string,
+    roles: string[] = [],
+  ): Promise<string> {
     const submission = await this.findOne(id, requestUserId, roles);
-    
+
     try {
       const codeBuffer = await this.fileStorageService.getFile(
         submission.sourceFile.bucket,
-        submission.sourceFile.key
+        submission.sourceFile.key,
       );
       return codeBuffer.toString('utf-8');
     } catch (error) {
@@ -221,11 +271,13 @@ export class SubmissionService {
     errorMessage?: string,
     testCasesPassed?: number,
     totalTestCases?: number,
-    roles: string[] = []
+    roles: string[] = [],
   ): Promise<Submission> {
     const isAdmin = roles.includes('admin') || roles.includes('superadmin');
     if (!isAdmin) {
-      throw new ForbiddenException('Access denied: Only admins can update verdicts');
+      throw new ForbiddenException(
+        'Access denied: Only admins can update verdicts',
+      );
     }
 
     if (!Types.ObjectId.isValid(id)) {
@@ -236,8 +288,10 @@ export class SubmissionService {
     if (timeUsedMs !== undefined) updateData.timeUsedMs = timeUsedMs;
     if (memoryUsedKb !== undefined) updateData.memoryUsedKb = memoryUsedKb;
     if (errorMessage !== undefined) updateData.errorMessage = errorMessage;
-    if (testCasesPassed !== undefined) updateData.testCasesPassed = testCasesPassed;
-    if (totalTestCases !== undefined) updateData.totalTestCases = totalTestCases;
+    if (testCasesPassed !== undefined)
+      updateData.testCasesPassed = testCasesPassed;
+    if (totalTestCases !== undefined)
+      updateData.totalTestCases = totalTestCases;
 
     const updated = await this.submissionModel
       .findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
@@ -255,7 +309,11 @@ export class SubmissionService {
   /**
    * Get submission statistics for a user
    */
-  async getUserStats(userId: string, requestUserId?: string, roles: string[] = []): Promise<any> {
+  async getUserStats(
+    userId: string,
+    requestUserId?: string,
+    roles: string[] = [],
+  ): Promise<any> {
     if (!Types.ObjectId.isValid(userId)) {
       throw new BadRequestException('Invalid user ID');
     }
@@ -265,7 +323,9 @@ export class SubmissionService {
 
     // Only admins and owners can view stats
     if (!isAdmin && !isOwner) {
-      throw new ForbiddenException('Access denied: Cannot view other users\' statistics');
+      throw new ForbiddenException(
+        "Access denied: Cannot view other users' statistics",
+      );
     }
 
     const stats = await this.submissionModel.aggregate([
@@ -278,8 +338,10 @@ export class SubmissionService {
       },
     ]);
 
-    const totalSubmissions = await this.submissionModel.countDocuments({ user: userId });
-    
+    const totalSubmissions = await this.submissionModel.countDocuments({
+      user: userId,
+    });
+
     return {
       totalSubmissions,
       verdictBreakdown: stats,

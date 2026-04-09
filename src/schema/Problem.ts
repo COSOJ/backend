@@ -18,7 +18,7 @@ export class Problem extends Document<string> {
 
   @Prop({ index: true })
   title: string;
-  
+
   @Prop()
   statement: string;
 
@@ -37,38 +37,45 @@ export class Problem extends Document<string> {
   @Prop()
   outputSpec: string;
 
-  @Prop({ 
-    type: [{
-      isPublic: { type: Boolean, required: true },
-      inputFile: {
-        bucket: String,
-        key: String,
-        originalName: String,
-        mimeType: String,
-        size: Number,
-        uploadedAt: Date
+  @Prop({
+    type: [
+      {
+        isPublic: { type: Boolean, required: true },
+        inputFile: {
+          bucket: String,
+          key: String,
+          originalName: String,
+          mimeType: String,
+          size: Number,
+          uploadedAt: Date,
+        },
+        outputFile: {
+          bucket: String,
+          key: String,
+          originalName: String,
+          mimeType: String,
+          size: Number,
+          uploadedAt: Date,
+        },
+        // todo: we will remove these fields in future, before major release
+        // Legacy fields for backward compatibility
+        input: String,
+        output: String,
       },
-      outputFile: {
-        bucket: String,
-        key: String,
-        originalName: String,
-        mimeType: String,
-        size: Number,
-        uploadedAt: Date
-      },
-      // todo: we will remove these fields in future, before major release
-      // Legacy fields for backward compatibility
-      input: String,
-      output: String
-    }], 
-    default: [] 
+    ],
+    default: [],
   })
   cases: TestCase[];
 
   @Prop({ type: [String], default: [], index: true })
   tags: string[];
 
-  @Prop({ type: String, enum: ['public', 'private'], default: 'private', index: true })
+  @Prop({
+    type: String,
+    enum: ['public', 'private'],
+    default: 'private',
+    index: true,
+  })
   visibility: 'public' | 'private';
 }
 

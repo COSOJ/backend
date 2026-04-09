@@ -1,4 +1,17 @@
-import { Body, Controller, Get, Post, Put, Delete, Param, UseGuards, Query, ParseIntPipe, DefaultValuePipe, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  UseGuards,
+  Query,
+  ParseIntPipe,
+  DefaultValuePipe,
+  Req,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../guard/JwtAuthGuard';
 import { OptionalJwtAuthGuard } from '../guard/OptionalJwtAuthGuard';
 import { ProblemService } from 'src/service/problem.service';
@@ -38,7 +51,7 @@ export class ProblemController {
   async findAll(
     @Query('current', new DefaultValuePipe(1), ParseIntPipe) current: number,
     @Query('pageSize', new DefaultValuePipe(5), ParseIntPipe) pageSize: number,
-    @Req() req
+    @Req() req,
   ) {
     const roles = req.user?.roles || [];
     return await this.problemService.findAll(current, pageSize, roles);

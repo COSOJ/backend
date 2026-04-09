@@ -1,5 +1,10 @@
 import { SetMetadata, UseInterceptors, applyDecorators } from '@nestjs/common';
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
@@ -20,13 +25,16 @@ export const NoCache = () => SetMetadata(NO_CACHE_KEY, true);
 export class NoCacheInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const response = context.switchToHttp().getResponse();
-    
+
     // Apply no-cache headers
-    response.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate',
+    );
     response.set('Pragma', 'no-cache');
     response.set('Expires', '0');
     response.set('Surrogate-Control', 'no-store');
-    
+
     return next.handle().pipe(
       tap(() => {
         // Ensure headers are set after response processing
@@ -39,13 +47,11 @@ export class NoCacheInterceptor implements NestInterceptor {
 /**
  * Composite decorator that applies both the metadata and interceptor
  * Use this on controllers or individual routes that should never be cached
- * 
+ *
  * @example
  * @DisableCache()
  * @Get('problems')
  * async findAll() { ... }
  */
-export const DisableCache = () => applyDecorators(
-  NoCache(),
-  UseInterceptors(NoCacheInterceptor)
-);
+export const DisableCache = () =>
+  applyDecorators(NoCache(), UseInterceptors(NoCacheInterceptor));

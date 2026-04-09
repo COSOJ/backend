@@ -6,9 +6,7 @@ import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class SuperAdminBootstrapService implements OnApplicationBootstrap {
-  constructor(
-    @InjectModel(User.name) private userModel: Model<User>
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async onApplicationBootstrap() {
     const handle = 'superadmin';

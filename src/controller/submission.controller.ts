@@ -1,15 +1,15 @@
-import { 
-  Body, 
-  Controller, 
-  Get, 
-  Post, 
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
   Put,
-  Param, 
+  Param,
   Query,
-  UseGuards, 
+  UseGuards,
   Req,
   ParseIntPipe,
-  DefaultValuePipe
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guard/JwtAuthGuard';
 import { OptionalJwtAuthGuard } from '../guard/OptionalJwtAuthGuard';
@@ -17,7 +17,10 @@ import { RolesGuard } from '../guard/RolesGuard';
 import { Roles } from '../decorator/roles.decorator';
 import { DisableCache } from '../decorator/no-cache.decorator';
 import { SubmissionService } from '../service/submission.service';
-import { CreateSubmissionDto, SubmissionQueryDto } from '../dto/submission/create-submission.dto';
+import {
+  CreateSubmissionDto,
+  SubmissionQueryDto,
+} from '../dto/submission/create-submission.dto';
 import { SubmissionVerdict, ProgrammingLanguage } from '../schema/Submission';
 import { Request } from 'express';
 
@@ -43,7 +46,7 @@ export class SubmissionController {
     @Query('problem') problem?: string,
     @Query('language') languageParam?: string,
     @Query('verdict') verdict?: string,
-    @Req() req?: Request
+    @Req() req?: Request,
   ) {
     const language = languageParam as ProgrammingLanguage | undefined;
     const query: SubmissionQueryDto = {
@@ -54,17 +57,20 @@ export class SubmissionController {
       language,
       verdict,
     };
-    
+
     const userId = req?.user?.['_id'] || req?.user?.['userId'];
     const roles = req?.user?.['roles'] || [];
-    
+
     return this.submissionService.findAll(query, userId, roles);
   }
 
   @Get('problem/:problemId')
   @UseGuards(OptionalJwtAuthGuard)
   @DisableCache()
-  async findByProblem(@Param('problemId') problemId: string, @Req() req?: Request) {
+  async findByProblem(
+    @Param('problemId') problemId: string,
+    @Req() req?: Request,
+  ) {
     const userId = req?.user?.['_id'] || req?.user?.['userId'];
     const roles = req?.user?.['roles'] || [];
     return this.submissionService.findByProblem(problemId, userId, roles);
@@ -103,7 +109,8 @@ export class SubmissionController {
   @DisableCache()
   async updateVerdict(
     @Param('id') id: string,
-    @Body() body: {
+    @Body()
+    body: {
       verdict: SubmissionVerdict;
       timeUsedMs?: number;
       memoryUsedKb?: number;
@@ -111,20 +118,27 @@ export class SubmissionController {
       testCasesPassed?: number;
       totalTestCases?: number;
     },
-    @Req() req: Request
+    @Req() req: Request,
   ) {
     const roles = req.user?.['roles'] || [];
-    const { verdict, timeUsedMs, memoryUsedKb, errorMessage, testCasesPassed, totalTestCases } = body;
-    
+    const {
+      verdict,
+      timeUsedMs,
+      memoryUsedKb,
+      errorMessage,
+      testCasesPassed,
+      totalTestCases,
+    } = body;
+
     return this.submissionService.updateVerdict(
-      id, 
-      verdict, 
-      timeUsedMs, 
-      memoryUsedKb, 
-      errorMessage, 
-      testCasesPassed, 
-      totalTestCases, 
-      roles
+      id,
+      verdict,
+      timeUsedMs,
+      memoryUsedKb,
+      errorMessage,
+      testCasesPassed,
+      totalTestCases,
+      roles,
     );
   }
 
@@ -134,8 +148,12 @@ export class SubmissionController {
   async getSourceCode(@Param('id') id: string, @Req() req: Request) {
     const userId = req.user?.['_id'] || req.user?.['userId'];
     const roles = req.user?.['roles'] || [];
-    
-    const sourceCode = await this.submissionService.getSourceCode(id, userId, roles);
+
+    const sourceCode = await this.submissionService.getSourceCode(
+      id,
+      userId,
+      roles,
+    );
     return { sourceCode };
   }
 }
