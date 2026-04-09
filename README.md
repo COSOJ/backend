@@ -5,15 +5,15 @@
 <!-- start test coverage -->
 
 
-> cosoj-backend@0.0.1 test:cov /home/maifee-25/codes-backup/cosoj/backend
+> cosoj-backend@0.0.1 test:cov /home/runner/work/backend/backend
 > jest --coverage
 
+PASS src/service/problem.service.spec.ts (6.94 s)
+PASS src/guard/RolesGuard.spec.ts
+PASS src/controller/auth.controller.spec.ts (7.269 s)
+PASS src/controller/problem.controller.spec.ts (7.311 s)
 PASS src/guard/OptionalJwtAuthGuard.spec.ts
 PASS src/app.controller.spec.ts
-PASS src/guard/RolesGuard.spec.ts
-PASS src/service/problem.service.spec.ts
-PASS src/controller/auth.controller.spec.ts
-PASS src/controller/problem.controller.spec.ts
 ----------------------------------|---------|----------|---------|---------|-------------------
 File                              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
 ----------------------------------|---------|----------|---------|---------|-------------------
@@ -67,7 +67,7 @@ All files                         |   30.58 |    12.96 |    29.8 |   28.73 |
 Test Suites: 6 passed, 6 total
 Tests:       36 passed, 36 total
 Snapshots:   0 total
-Time:        8.806 s
+Time:        14.844 s
 Ran all test suites.
 
 <!-- end test coverage -->
