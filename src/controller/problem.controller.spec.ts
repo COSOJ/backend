@@ -6,6 +6,7 @@ import { Problem } from '../schema/Problem';
 import { JwtAuthGuard } from '../guard/JwtAuthGuard';
 import { OptionalJwtAuthGuard } from '../guard/OptionalJwtAuthGuard';
 import { RolesGuard } from '../guard/RolesGuard';
+import { Request } from 'express';
 
 describe('ProblemController', () => {
   let controller: ProblemController;
@@ -91,7 +92,7 @@ describe('ProblemController', () => {
     };
     mockProblemService.findAll.mockResolvedValue(expectedResult);
 
-    const mockReq = { user: undefined }; // Simulate unauthenticated request
+    const mockReq = { user: undefined } as unknown as Request;
     const result: unknown = await controller.findAll(1, 5, mockReq);
 
     expect(mockProblemService.findAll).toHaveBeenCalledWith(1, 5, []);
@@ -108,7 +109,7 @@ describe('ProblemController', () => {
     };
     mockProblemService.findAll.mockResolvedValue(expectedResult);
 
-    const mockReq = { user: { roles: ['admin'] } }; // Simulate admin request
+    const mockReq = { user: { roles: ['admin'] } } as unknown as Request;
     const result: unknown = await controller.findAll(1, 5, mockReq);
 
     expect(mockProblemService.findAll).toHaveBeenCalledWith(1, 5, ['admin']);
@@ -124,7 +125,7 @@ describe('ProblemController', () => {
     };
     mockProblemService.findOne.mockResolvedValue(expectedProblem);
 
-    const mockReq = { user: undefined }; // Simulate unauthenticated request
+    const mockReq = { user: undefined } as unknown as Request;
     const result: unknown = await controller.findOne('1', mockReq);
 
     expect(mockProblemService.findOne).toHaveBeenCalledWith('1', []);
@@ -140,7 +141,7 @@ describe('ProblemController', () => {
     };
     mockProblemService.findOne.mockResolvedValue(expectedProblem);
 
-    const mockReq = { user: { roles: ['admin'] } }; // Simulate admin request
+    const mockReq = { user: { roles: ['admin'] } } as unknown as Request;
     const result: unknown = await controller.findOne('1', mockReq);
 
     expect(mockProblemService.findOne).toHaveBeenCalledWith('1', ['admin']);
