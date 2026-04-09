@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { InjectModel } from '@nestjs/mongoose';
@@ -35,7 +35,7 @@ export class AuthService {
     return { ...tokens, user };
   }
 
-  async refreshTokens(userId: string, refreshToken: string) {
+  async refreshTokens(userId: string) {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException();
     const tokens = await this.generateTokens(userId);
