@@ -8,11 +8,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { LoginDto } from 'src/dto/auth/login.dto';
-import { RegisterDto } from 'src/dto/auth/register.dto';
-import { JwtAuthGuard } from 'src/guard/JwtAuthGuard';
-import { RefreshTokenGuard } from 'src/guard/RefreshTokenGuard';
-import { AuthService } from 'src/service/auth.service';
+import { LoginDto } from '../dto/auth/login.dto';
+import { RegisterDto } from '../dto/auth/register.dto';
+import { JwtAuthGuard } from '../guard/JwtAuthGuard';
+import { RefreshTokenGuard } from '../guard/RefreshTokenGuard';
+import { AuthService } from '../service/auth.service';
 
 type RefreshRequest = Request & {
   cookies: { refreshToken?: string };
