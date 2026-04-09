@@ -11,7 +11,12 @@ export class RefreshTokenStrategy extends PassportStrategy(
   constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (req: Request) => req.cookies?.refreshToken ?? null,
+        (req: Request) => {
+          const cookies = (req as Request & { cookies?: Record<string, unknown> })
+            .cookies;
+          const refreshToken = cookies?.refreshToken;
+          return typeof refreshToken === 'string' ? refreshToken : null;
+        },
       ]),
       secretOrKey: process.env.REFRESH_TOKEN_SECRET || 'refresh_secret',
       passReqToCallback: true,
