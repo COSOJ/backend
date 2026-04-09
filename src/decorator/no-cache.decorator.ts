@@ -24,10 +24,7 @@ export const NoCache = () => SetMetadata(NO_CACHE_KEY, true);
  */
 @Injectable()
 export class NoCacheInterceptor implements NestInterceptor {
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<unknown> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const response = context.switchToHttp().getResponse<Response>();
 
     // Apply no-cache headers
