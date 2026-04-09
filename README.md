@@ -4,17 +4,6 @@
 ### Coverage
 <!-- start test coverage -->
 
-
-> cosoj-backend@0.0.1 test:cov /home/runner/work/backend/backend
-> jest --coverage
-
-PASS src/service/problem.service.spec.ts (6.729 s)
-PASS src/guard/RolesGuard.spec.ts
-PASS src/guard/OptionalJwtAuthGuard.spec.ts
-PASS src/controller/problem.controller.spec.ts (7.062 s)
-PASS src/controller/auth.controller.spec.ts (7.207 s)
-PASS src/app.controller.spec.ts
-----------------------------------|---------|----------|---------|---------|-------------------
 File                              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
 ----------------------------------|---------|----------|---------|---------|-------------------
 All files                         |   30.58 |    12.96 |    29.8 |   28.73 |                   
@@ -67,7 +56,7 @@ All files                         |   30.58 |    12.96 |    29.8 |   28.73 |
 Test Suites: 6 passed, 6 total
 Tests:       36 passed, 36 total
 Snapshots:   0 total
-Time:        14.822 s
+Time:        14.218 s
 Ran all test suites.
 
 <!-- end test coverage -->
