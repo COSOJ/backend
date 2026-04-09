@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  UnauthorizedException,
   Get,
   Post,
   Put,
@@ -28,11 +29,23 @@ import { Request } from 'express';
 export class SubmissionController {
   constructor(private readonly submissionService: SubmissionService) {}
 
+  private getUserId(req?: Request): string | undefined {
+    const id = req?.user?._id ?? req?.user?.userId;
+    return typeof id === 'string' ? id : undefined;
+  }
+
+  private getRoles(req?: Request): string[] {
+    return Array.isArray(req?.user?.roles) ? req.user.roles : [];
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @DisableCache()
   async create(@Body() dto: CreateSubmissionDto, @Req() req: Request) {
-    const userId = req.user?.['_id'] || req.user?.['userId'];
+    const userId = this.getUserId(req);
+    if (!userId) {
+      throw new UnauthorizedException('Authentication required');
+    }
     return this.submissionService.create(dto, userId);
   }
 
@@ -58,8 +71,8 @@ export class SubmissionController {
       verdict,
     };
 
-    const userId = req?.user?.['_id'] || req?.user?.['userId'];
-    const roles = req?.user?.['roles'] || [];
+    const userId = this.getUserId(req);
+    const roles = this.getRoles(req);
 
     return this.submissionService.findAll(query, userId, roles);
   }
@@ -71,8 +84,8 @@ export class SubmissionController {
     @Param('problemId') problemId: string,
     @Req() req?: Request,
   ) {
-    const userId = req?.user?.['_id'] || req?.user?.['userId'];
-    const roles = req?.user?.['roles'] || [];
+    const userId = this.getUserId(req);
+    const roles = this.getRoles(req);
     return this.submissionService.findByProblem(problemId, userId, roles);
   }
 
@@ -80,8 +93,8 @@ export class SubmissionController {
   @UseGuards(OptionalJwtAuthGuard)
   @DisableCache()
   async findByUser(@Param('userId') userId: string, @Req() req?: Request) {
-    const requestUserId = req?.user?.['_id'] || req?.user?.['userId'];
-    const roles = req?.user?.['roles'] || [];
+    const requestUserId = this.getUserId(req);
+    const roles = this.getRoles(req);
     return this.submissionService.findByUser(userId, requestUserId, roles);
   }
 
@@ -89,8 +102,8 @@ export class SubmissionController {
   @UseGuards(OptionalJwtAuthGuard)
   @DisableCache()
   async getUserStats(@Param('userId') userId: string, @Req() req?: Request) {
-    const requestUserId = req?.user?.['_id'] || req?.user?.['userId'];
-    const roles = req?.user?.['roles'] || [];
+    const requestUserId = this.getUserId(req);
+    const roles = this.getRoles(req);
     return this.submissionService.getUserStats(userId, requestUserId, roles);
   }
 
@@ -98,8 +111,8 @@ export class SubmissionController {
   @UseGuards(OptionalJwtAuthGuard)
   @DisableCache()
   async findOne(@Param('id') id: string, @Req() req?: Request) {
-    const userId = req?.user?.['_id'] || req?.user?.['userId'];
-    const roles = req?.user?.['roles'] || [];
+    const userId = this.getUserId(req);
+    const roles = this.getRoles(req);
     return this.submissionService.findOne(id, userId, roles);
   }
 
@@ -120,7 +133,7 @@ export class SubmissionController {
     },
     @Req() req: Request,
   ) {
-    const roles = req.user?.['roles'] || [];
+    const roles = this.getRoles(req);
     const {
       verdict,
       timeUsedMs,
@@ -146,8 +159,8 @@ export class SubmissionController {
   @UseGuards(OptionalJwtAuthGuard)
   @DisableCache()
   async getSourceCode(@Param('id') id: string, @Req() req: Request) {
-    const userId = req.user?.['_id'] || req.user?.['userId'];
-    const roles = req.user?.['roles'] || [];
+    const userId = this.getUserId(req);
+    const roles = this.getRoles(req);
 
     const sourceCode = await this.submissionService.getSourceCode(
       id,
