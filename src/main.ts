@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { developmentConfig } from './config/development.config';
 
@@ -7,7 +8,7 @@ import { developmentConfig } from './config/development.config';
 const allowedOrigins = ['http://localhost:5173'];
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Disable caching in development mode to prevent 304 responses
   const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -41,4 +42,4 @@ async function bootstrap() {
   });
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();
