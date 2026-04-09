@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, RootFilterQuery, Types, UpdateQuery } from 'mongoose';
 import { Submission, SubmissionVerdict } from '../schema/Submission';
 import {
   CreateSubmissionDto,
@@ -21,6 +21,19 @@ export interface SubmissionListResponse {
   totalPages: number;
 }
 
+export interface SubmissionStatsResponse {
+  totalSubmissions: number;
+  verdictBreakdown: Array<{
+    _id: SubmissionVerdict;
+    count: number;
+  }>;
+}
+
+type SubmissionOwner =
+  | string
+  | { _id?: Types.ObjectId | string; toString(): string };
+type SubmissionAccessTarget = { user: SubmissionOwner };
+
 @Injectable()
 export class SubmissionService {
   constructor(
@@ -32,13 +45,18 @@ export class SubmissionService {
    * Check if user can view submission based on roles and ownership
    */
   private canViewSubmission(
-    submission: any,
+    submission: SubmissionAccessTarget,
     userId: string,
     roles: string[] = [],
   ): boolean {
-    const isOwner =
-      submission.user._id?.toString() === userId ||
-      submission.user.toString() === userId;
+    const owner = submission.user;
+    const ownerId =
+      typeof owner === 'string'
+        ? owner
+        : owner._id
+          ? owner._id.toString()
+          : owner.toString();
+    const isOwner = ownerId === userId;
     const isAdmin = roles.includes('admin') || roles.includes('superadmin');
     return isOwner || isAdmin;
   }
@@ -89,10 +107,10 @@ export class SubmissionService {
       }
 
       return populatedSubmission;
-    } catch (error) {
-      throw new BadRequestException(
-        `Failed to create submission: ${error.message}`,
-      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown submission error';
+      throw new BadRequestException(`Failed to create submission: ${message}`);
     }
   }
 
@@ -115,7 +133,7 @@ export class SubmissionService {
     const skip = (current - 1) * pageSize;
 
     // Build filter
-    const filter: any = {};
+    const filter: RootFilterQuery<Submission> = {};
     if (user && Types.ObjectId.isValid(user)) filter.user = user;
     if (problem && Types.ObjectId.isValid(problem)) filter.problem = problem;
     if (language) filter.language = language;
@@ -162,7 +180,7 @@ export class SubmissionService {
     }
 
     const isAdmin = roles.includes('admin') || roles.includes('superadmin');
-    const filter: any = { problem: problemId };
+    const filter: RootFilterQuery<Submission> = { problem: problemId };
 
     // Non-admin users can only see their own submissions
     if (!isAdmin && requestUserId) {
@@ -255,7 +273,7 @@ export class SubmissionService {
         submission.sourceFile.key,
       );
       return codeBuffer.toString('utf-8');
-    } catch (error) {
+    } catch {
       throw new NotFoundException('Source code file not found');
     }
   }
@@ -284,7 +302,7 @@ export class SubmissionService {
       throw new BadRequestException('Invalid submission ID');
     }
 
-    const updateData: any = { verdict };
+    const updateData: UpdateQuery<Submission> = { verdict };
     if (timeUsedMs !== undefined) updateData.timeUsedMs = timeUsedMs;
     if (memoryUsedKb !== undefined) updateData.memoryUsedKb = memoryUsedKb;
     if (errorMessage !== undefined) updateData.errorMessage = errorMessage;
@@ -313,7 +331,7 @@ export class SubmissionService {
     userId: string,
     requestUserId?: string,
     roles: string[] = [],
-  ): Promise<any> {
+  ): Promise<SubmissionStatsResponse> {
     if (!Types.ObjectId.isValid(userId)) {
       throw new BadRequestException('Invalid user ID');
     }
@@ -328,7 +346,10 @@ export class SubmissionService {
       );
     }
 
-    const stats = await this.submissionModel.aggregate([
+    const stats = await this.submissionModel.aggregate<{
+      _id: SubmissionVerdict;
+      count: number;
+    }>([
       { $match: { user: new Types.ObjectId(userId) } },
       {
         $group: {
