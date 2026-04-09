@@ -67,14 +67,16 @@ describe('ProblemService', () => {
     const result = await service.findAll(2, 3, ['user']);
 
     expect(mockProblemModel.aggregate).toHaveBeenCalledTimes(1);
-    const aggregateCalls = mockProblemModel.aggregate.mock.calls as Array<[
-      Array<{
-        $match?: unknown;
-        $addFields?: unknown;
-        $skip?: number;
-        $limit?: number;
-      }>,
-    ]>;
+    const aggregateCalls = mockProblemModel.aggregate.mock.calls as Array<
+      [
+        Array<{
+          $match?: unknown;
+          $addFields?: unknown;
+          $skip?: number;
+          $limit?: number;
+        }>,
+      ]
+    >;
     const pipeline = aggregateCalls[0][0];
 
     expect(pipeline[0]).toEqual({ $match: { visibility: 'public' } });
@@ -94,20 +96,24 @@ describe('ProblemService', () => {
   });
 
   it('should find all problems for admin users without projection filter', async () => {
-    const aggregateExec = jest.fn().mockResolvedValue([{ _id: 'p1' }, { _id: 'p2' }]);
+    const aggregateExec = jest
+      .fn()
+      .mockResolvedValue([{ _id: 'p1' }, { _id: 'p2' }]);
     mockProblemModel.aggregate.mockReturnValue({ exec: aggregateExec });
     mockProblemModel.countDocuments.mockResolvedValue(2);
 
     const result = await service.findAll(1, 5, ['admin']);
 
-    const aggregateCalls = mockProblemModel.aggregate.mock.calls as Array<[
-      Array<{
-        $match?: unknown;
-        $addFields?: unknown;
-        $skip?: number;
-        $limit?: number;
-      }>,
-    ]>;
+    const aggregateCalls = mockProblemModel.aggregate.mock.calls as Array<
+      [
+        Array<{
+          $match?: unknown;
+          $addFields?: unknown;
+          $skip?: number;
+          $limit?: number;
+        }>,
+      ]
+    >;
     const pipeline = aggregateCalls[0][0];
 
     expect(pipeline[0]).toEqual({ $match: {} });
