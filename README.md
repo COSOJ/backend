@@ -51,12 +51,11 @@ All files                         |   30.58 |    12.96 |    29.8 |   28.73 |
  src/types                        |       0 |        0 |       0 |       0 |                   
   express.d.ts                    |       0 |        0 |       0 |       0 |                   
   passport-jwt.d.ts               |       0 |        0 |       0 |       0 |                   
-----------------------------------|---------|----------|---------|---------|-------------------
 
 Test Suites: 6 passed, 6 total
 Tests:       36 passed, 36 total
 Snapshots:   0 total
-Time:        15.256 s
+Time:        14.534 s
 Ran all test suites.
 
 <!-- end test coverage -->
