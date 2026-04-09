@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Submission, SubmissionVerdict } from '../schema/Submission';
 import { CreateSubmissionDto, SubmissionQueryDto } from '../dto/submission/create-submission.dto';
+import { FileStorageService } from './file-storage.service';
 
 export interface SubmissionListResponse {
   items: Submission[];
@@ -14,7 +15,10 @@ export interface SubmissionListResponse {
 
 @Injectable()
 export class SubmissionService {
-  constructor(@InjectModel(Submission.name) private submissionModel: Model<Submission>) {}
+  constructor(
+    @InjectModel(Submission.name) private submissionModel: Model<Submission>,
+    private readonly fileStorageService: FileStorageService
+  ) {}
 
   /**
    * Check if user can view submission based on roles and ownership
@@ -34,28 +38,43 @@ export class SubmissionService {
       throw new BadRequestException('Invalid problem ID');
     }
 
-    const created = await this.submissionModel.create({
-      ...dto,
-      user: userId,
-      verdict: SubmissionVerdict.PENDING,
-      timeUsedMs: 0,
-      memoryUsedKb: 0,
-      testCasesPassed: 0,
-      totalTestCases: 0,
-    });
+    try {
+      // Upload source code to file storage
+      const uploadResult = await this.fileStorageService.uploadSubmissionFile(
+        dto.code,
+        dto.language,
+        new Types.ObjectId().toString() // Generate temporary ID for filename
+      );
 
-    // Populate user and problem info for response
-    const populatedSubmission = await this.submissionModel
-      .findById(created._id)
-      .populate('user', 'handle')
-      .populate('problem', 'code title')
-      .exec();
+      const created = await this.submissionModel.create({
+        user: userId,
+        problem: dto.problem,
+        language: dto.language,
+        verdict: SubmissionVerdict.PENDING,
+        timeUsedMs: 0,
+        memoryUsedKb: 0,
+        sourceFile: uploadResult.metadata,
+        testCasesPassed: 0,
+        totalTestCases: 0,
+      });
 
-    if (!populatedSubmission) {
-      throw new Error('Failed to create submission');
+      // Populate user and problem info for response
+      const populatedSubmission = await this.submissionModel
+        .findById(created._id)
+        .populate('user', 'handle')
+        .populate('problem', 'code title')
+        .exec();
+
+      if (!populatedSubmission) {
+        // Clean up uploaded file if submission creation failed
+        await this.fileStorageService.deleteFile(uploadResult.bucket, uploadResult.key);
+        throw new Error('Failed to create submission');
+      }
+
+      return populatedSubmission;
+    } catch (error) {
+      throw new BadRequestException(`Failed to create submission: ${error.message}`);
     }
-
-    return populatedSubmission;
   }
 
   /**
@@ -172,6 +191,23 @@ export class SubmissionService {
     }
 
     return submission;
+  }
+
+  /**
+   * Get submission source code content
+   */
+  async getSourceCode(id: string, requestUserId?: string, roles: string[] = []): Promise<string> {
+    const submission = await this.findOne(id, requestUserId, roles);
+    
+    try {
+      const codeBuffer = await this.fileStorageService.getFile(
+        submission.sourceFile.bucket,
+        submission.sourceFile.key
+      );
+      return codeBuffer.toString('utf-8');
+    } catch (error) {
+      throw new NotFoundException('Source code file not found');
+    }
   }
 
   /**
