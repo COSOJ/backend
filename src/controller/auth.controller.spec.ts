@@ -42,7 +42,10 @@ describe('AuthController', () => {
 
     expect(mockAuthService.register).toHaveBeenCalledWith(dto);
     expect((res.cookie as jest.Mock).mock.calls).toHaveLength(2);
-    expect(result).toEqual({ accessToken: payload.accessToken, user: payload.user });
+    expect(result).toEqual({
+      accessToken: payload.accessToken,
+      user: payload.user,
+    });
   });
 
   it('should login user and set auth cookies', async () => {
@@ -62,7 +65,10 @@ describe('AuthController', () => {
 
     expect(mockAuthService.login).toHaveBeenCalledWith(dto);
     expect((res.cookie as jest.Mock).mock.calls).toHaveLength(2);
-    expect(result).toEqual({ accessToken: payload.accessToken, user: payload.user });
+    expect(result).toEqual({
+      accessToken: payload.accessToken,
+      user: payload.user,
+    });
   });
 
   it('should refresh tokens and set new cookies', async () => {
@@ -101,7 +107,9 @@ describe('AuthController', () => {
 
     const result = await controller.checkHandle('new-handle');
 
-    expect(mockAuthService.isHandleAvailable).toHaveBeenCalledWith('new-handle');
+    expect(mockAuthService.isHandleAvailable).toHaveBeenCalledWith(
+      'new-handle',
+    );
     expect(result).toEqual({ available: true });
   });
 

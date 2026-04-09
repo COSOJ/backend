@@ -11,7 +11,9 @@ describe('OptionalJwtAuthGuard', () => {
 
   it('should delegate canActivate to parent AuthGuard', () => {
     const context = {} as ExecutionContext;
-    const parentPrototype = Object.getPrototypeOf(OptionalJwtAuthGuard.prototype) as {
+    const parentPrototype = Object.getPrototypeOf(
+      OptionalJwtAuthGuard.prototype,
+    ) as {
       canActivate: (ctx: ExecutionContext) => boolean;
     };
 

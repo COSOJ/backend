@@ -12,7 +12,7 @@ describe('RolesGuard', () => {
       getHandler: jest.fn(),
       getClass: jest.fn(),
       switchToHttp: () => ({
-        getRequest: () => ({ user } as Request),
+        getRequest: () => ({ user }) as Request,
       }),
     } as unknown as ExecutionContext;
   };

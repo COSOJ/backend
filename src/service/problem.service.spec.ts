@@ -90,7 +90,9 @@ describe('ProblemService', () => {
   });
 
   it('should find all problems for admin users without projection filter', async () => {
-    const aggregateExec = jest.fn().mockResolvedValue([{ _id: 'p1' }, { _id: 'p2' }]);
+    const aggregateExec = jest
+      .fn()
+      .mockResolvedValue([{ _id: 'p1' }, { _id: 'p2' }]);
     mockProblemModel.aggregate.mockReturnValue({ exec: aggregateExec });
     mockProblemModel.countDocuments.mockResolvedValue(2);
 
@@ -153,10 +155,14 @@ describe('ProblemService', () => {
 
     const result = await service.update(validId, dto);
 
-    expect(mockProblemModel.findByIdAndUpdate).toHaveBeenCalledWith(validId, dto, {
-      new: true,
-      runValidators: true,
-    });
+    expect(mockProblemModel.findByIdAndUpdate).toHaveBeenCalledWith(
+      validId,
+      dto,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
     expect(result).toEqual(updated);
   });
 
