@@ -23,9 +23,9 @@ export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
   handleRequest<TUser = Request['user']>(
     _err: unknown,
     user: Request['user'],
-    _info: unknown,
-    _context: ExecutionContext,
-    _status?: unknown,
+    // _info: unknown,
+    // _context: ExecutionContext,
+    // _status?: unknown,
   ): TUser {
     // Don't throw error for missing or invalid tokens
     // Just return undefined user for unauthenticated requests
