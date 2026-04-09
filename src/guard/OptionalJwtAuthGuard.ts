@@ -1,5 +1,6 @@
 import { Injectable, ExecutionContext } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
 
 /**
  * Optional JWT Auth Guard - allows requests with or without authentication
@@ -19,7 +20,7 @@ export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
    * Override handleRequest to not throw errors for missing/invalid tokens
    * Returns user if authentication succeeds, undefined otherwise
    */
-  handleRequest(err: any, user: any) {
+  handleRequest(_err: unknown, user: Request['user']) {
     // Don't throw error for missing or invalid tokens
     // Just return undefined user for unauthenticated requests
     return user;
