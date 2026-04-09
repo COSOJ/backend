@@ -14,11 +14,11 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guard/JwtAuthGuard';
 import { OptionalJwtAuthGuard } from '../guard/OptionalJwtAuthGuard';
-import { ProblemService } from 'src/service/problem.service';
-import { RolesGuard } from 'src/guard/RolesGuard';
-import { Roles } from 'src/decorator/roles.decorator';
-import { DisableCache } from 'src/decorator/no-cache.decorator';
-import { CreateProblemDto } from 'src/dto/problem/create-problem.dto';
+import { ProblemService } from '../service/problem.service';
+import { RolesGuard } from '../guard/RolesGuard';
+import { Roles } from '../decorator/roles.decorator';
+import { DisableCache } from '../decorator/no-cache.decorator';
+import { CreateProblemDto } from '../dto/problem/create-problem.dto';
 
 @Controller('problems')
 export class ProblemController {
