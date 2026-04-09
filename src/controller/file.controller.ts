@@ -18,7 +18,10 @@ import { OptionalJwtAuthGuard } from '../guard/OptionalJwtAuthGuard';
 import { RolesGuard } from '../guard/RolesGuard';
 import { CurrentUser } from '../decorator/current-user.decorator';
 import { User } from '../schema/User';
-import { appConfig } from '../config/app.config';
+
+type SubmissionAccessTarget = {
+  user: string | { toString(): string };
+};
 
 @Controller('files')
 @UseGuards(OptionalJwtAuthGuard, RolesGuard)
@@ -285,7 +288,7 @@ export class FileController {
    * Check if user can access a submission
    */
   private canAccessSubmission(
-    submission: any,
+    submission: SubmissionAccessTarget,
     user: User | undefined,
   ): boolean {
     if (!user) {
@@ -293,7 +296,11 @@ export class FileController {
     }
 
     // Users can access their own submissions
-    if (submission.user.toString() === user._id.toString()) {
+    const submissionUserId =
+      typeof submission.user === 'string'
+        ? submission.user
+        : submission.user.toString();
+    if (submissionUserId === user._id.toString()) {
       return true;
     }
 
