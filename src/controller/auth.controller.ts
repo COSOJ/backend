@@ -14,6 +14,10 @@ import { JwtAuthGuard } from 'src/guard/JwtAuthGuard';
 import { RefreshTokenGuard } from 'src/guard/RefreshTokenGuard';
 import { AuthService } from 'src/service/auth.service';
 
+type RefreshRequest = Request & {
+  cookies: { refreshToken?: string };
+};
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -57,12 +61,15 @@ export class AuthController {
   @Post('refresh')
   @UseGuards(RefreshTokenGuard)
   async refresh(
-    @Req() req: Request,
+    @Req() req: RefreshRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new Error('Missing authenticated user id');
+    }
     const { accessToken, refreshToken } = await this.authService.refreshTokens(
-      req.user!['userId'],
-      req.cookies.refreshToken,
+      userId,
     );
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -82,12 +89,12 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  async me(@Req() req: Request) {
+  me(@Req() req: Request) {
     return req.user;
   }
 
   @Post('logout')
-  async logout(@Res({ passthrough: true }) res: Response) {
+  logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
     return { message: 'Logged out successfully' };
