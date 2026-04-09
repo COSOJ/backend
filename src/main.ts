@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { developmentConfig } from './config/development.config';
 
@@ -13,7 +14,7 @@ async function bootstrap() {
   // Disable caching in development mode to prevent 304 responses
   const isDevelopment = process.env.NODE_ENV !== 'production';
   if (isDevelopment) {
-    app.use((req, res, next) => {
+    app.use((req: Request, res: Response, next: NextFunction) => {
       // Apply development cache headers to prevent 304 responses
       Object.entries(developmentConfig.cache.headers).forEach(
         ([key, value]) => {
@@ -24,7 +25,7 @@ async function bootstrap() {
     });
 
     // Disable ETag generation at Express level
-    app.getHttpAdapter().getInstance().set('etag', developmentConfig.etag);
+    app.set('etag', developmentConfig.etag);
   }
 
   // Add global validation pipe for input validation (security requirement)
