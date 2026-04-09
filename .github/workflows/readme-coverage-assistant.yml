@@ -1,0 +1,85 @@
+name: Readme Coverage Assistant
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  release:
+    types: [published, created, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme-coverage:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate coverage and update README
+        run: |
+          START_MARKER="<!-- start test coverage -->"
+          END_MARKER="<!-- end test coverage -->"
+
+          pnpm test:cov 2>&1 | tee coverage-output.txt
+
+          awk -v start="$START_MARKER" -v end="$END_MARKER" '
+            $0 == start {
+              print
+              print ""
+              while ((getline line < "coverage-output.txt") > 0) {
+                print line
+              }
+              close("coverage-output.txt")
+              print ""
+              in_block = 1
+              next
+            }
+            $0 == end {
+              in_block = 0
+              print
+              next
+            }
+            !in_block { print }
+          ' README.md > README.md.tmp
+
+          mv README.md.tmp README.md
+
+      - name: Commit README coverage update
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f README.md
+
+          if git diff --cached --quiet; then
+            echo "No README coverage changes to commit."
+            exit 0
+          fi
+
+          git commit -m "[report]: update readme coverage block
+
+           - for ${{ github.sha }}
+           - at ${{ github.event.head_commit.timestamp }};"
+          git push
