@@ -50,6 +50,16 @@ jobs:
             /^Ran all test suites\./ { exit }
           ' coverage-output.txt > coverage-block.txt
 
+          awk '
+            { lines[NR] = $0 }
+            $0 ~ /-+\|-+\|-+\|-+\|-+\|-+/ { last = NR }
+            END {
+              for (i = 1; i <= NR; i++) {
+                if (i != last) print lines[i]
+              }
+            }
+          ' coverage-block.txt > coverage-block.tmp && mv coverage-block.tmp coverage-block.txt
+
           awk -v start="$START_MARKER" -v end="$END_MARKER" '
             $0 == start {
               print
