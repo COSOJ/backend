@@ -127,4 +127,15 @@ export class SubmissionController {
       roles
     );
   }
+
+  @Get(':id/source')
+  @UseGuards(OptionalJwtAuthGuard)
+  @DisableCache()
+  async getSourceCode(@Param('id') id: string, @Req() req: Request) {
+    const userId = req.user?.['_id'] || req.user?.['userId'];
+    const roles = req.user?.['roles'] || [];
+    
+    const sourceCode = await this.submissionService.getSourceCode(id, userId, roles);
+    return { sourceCode };
+  }
 }
