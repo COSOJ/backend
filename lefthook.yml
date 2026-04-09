@@ -1,5 +1,7 @@
 pre-commit:
   parallel: false
   commands:
-    lint-and-test:
-      run: pnpm lint && pnpm test
+    lint:
+      run: pnpm lint
+    test:
+      run: pnpm test
