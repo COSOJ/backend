@@ -44,14 +44,20 @@ jobs:
 
           pnpm test:cov 2>&1 | tee coverage-output.txt
 
+          awk '
+            /^File[[:space:]]+\|/ { in_block = 1 }
+            in_block { print }
+            /^Ran all test suites\./ { exit }
+          ' coverage-output.txt > coverage-block.txt
+
           awk -v start="$START_MARKER" -v end="$END_MARKER" '
             $0 == start {
               print
               print ""
-              while ((getline line < "coverage-output.txt") > 0) {
+              while ((getline line < "coverage-block.txt") > 0) {
                 print line
               }
-              close("coverage-output.txt")
+              close("coverage-block.txt")
               print ""
               in_block = 1
               next
