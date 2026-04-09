@@ -19,6 +19,7 @@ import { RolesGuard } from '../guard/RolesGuard';
 import { Roles } from '../decorator/roles.decorator';
 import { DisableCache } from '../decorator/no-cache.decorator';
 import { CreateProblemDto } from '../dto/problem/create-problem.dto';
+import { Request } from 'express';
 
 @Controller('problems')
 export class ProblemController {
@@ -51,17 +52,17 @@ export class ProblemController {
   async findAll(
     @Query('current', new DefaultValuePipe(1), ParseIntPipe) current: number,
     @Query('pageSize', new DefaultValuePipe(5), ParseIntPipe) pageSize: number,
-    @Req() req,
+    @Req() req: Request,
   ) {
-    const roles = req.user?.roles || [];
-    return await this.problemService.findAll(current, pageSize, roles);
+    const roles = Array.isArray(req.user?.roles) ? req.user.roles : [];
+    return this.problemService.findAll(current, pageSize, roles);
   }
 
   @Get(':id')
   @UseGuards(OptionalJwtAuthGuard)
   @DisableCache()
-  async findOne(@Param('id') id: string, @Req() req) {
-    const roles = req.user?.roles || [];
+  async findOne(@Param('id') id: string, @Req() req: Request) {
+    const roles = Array.isArray(req.user?.roles) ? req.user.roles : [];
     return this.problemService.findOne(id, roles);
   }
 }
