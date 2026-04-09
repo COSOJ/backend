@@ -9,7 +9,6 @@ import { RolesGuard } from '../guard/RolesGuard';
 
 describe('ProblemController', () => {
   let controller: ProblemController;
-  let service: ProblemService;
 
   const mockProblemModel = {
     create: jest.fn(),
@@ -52,7 +51,6 @@ describe('ProblemController', () => {
       .compile();
 
     controller = module.get<ProblemController>(ProblemController);
-    service = module.get<ProblemService>(ProblemService);
   });
 
   it('should be defined', () => {
@@ -77,9 +75,9 @@ describe('ProblemController', () => {
     const expectedResult = { _id: '1', ...createProblemDto };
     mockProblemService.create.mockResolvedValue(expectedResult);
 
-    const result = await controller.create(createProblemDto);
+    const result: unknown = await controller.create(createProblemDto);
 
-    expect(service.create).toHaveBeenCalledWith(createProblemDto);
+    expect(mockProblemService.create).toHaveBeenCalledWith(createProblemDto);
     expect(result).toEqual(expectedResult);
   });
 
@@ -94,9 +92,9 @@ describe('ProblemController', () => {
     mockProblemService.findAll.mockResolvedValue(expectedResult);
 
     const mockReq = { user: undefined }; // Simulate unauthenticated request
-    const result = await controller.findAll(1, 5, mockReq);
+    const result: unknown = await controller.findAll(1, 5, mockReq);
 
-    expect(service.findAll).toHaveBeenCalledWith(1, 5, []);
+    expect(mockProblemService.findAll).toHaveBeenCalledWith(1, 5, []);
     expect(result).toEqual(expectedResult);
   });
 
@@ -111,9 +109,9 @@ describe('ProblemController', () => {
     mockProblemService.findAll.mockResolvedValue(expectedResult);
 
     const mockReq = { user: { roles: ['admin'] } }; // Simulate admin request
-    const result = await controller.findAll(1, 5, mockReq);
+    const result: unknown = await controller.findAll(1, 5, mockReq);
 
-    expect(service.findAll).toHaveBeenCalledWith(1, 5, ['admin']);
+    expect(mockProblemService.findAll).toHaveBeenCalledWith(1, 5, ['admin']);
     expect(result).toEqual(expectedResult);
   });
 
@@ -127,9 +125,9 @@ describe('ProblemController', () => {
     mockProblemService.findOne.mockResolvedValue(expectedProblem);
 
     const mockReq = { user: undefined }; // Simulate unauthenticated request
-    const result = await controller.findOne('1', mockReq);
+    const result: unknown = await controller.findOne('1', mockReq);
 
-    expect(service.findOne).toHaveBeenCalledWith('1', []);
+    expect(mockProblemService.findOne).toHaveBeenCalledWith('1', []);
     expect(result).toEqual(expectedProblem);
   });
 
@@ -143,9 +141,9 @@ describe('ProblemController', () => {
     mockProblemService.findOne.mockResolvedValue(expectedProblem);
 
     const mockReq = { user: { roles: ['admin'] } }; // Simulate admin request
-    const result = await controller.findOne('1', mockReq);
+    const result: unknown = await controller.findOne('1', mockReq);
 
-    expect(service.findOne).toHaveBeenCalledWith('1', ['admin']);
+    expect(mockProblemService.findOne).toHaveBeenCalledWith('1', ['admin']);
     expect(result).toEqual(expectedProblem);
   });
 });
