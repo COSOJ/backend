@@ -13,10 +13,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
         (req: Request) => {
-          const cookies = (req as Request & { cookies?: Record<string, unknown> })
-            .cookies;
-          const accessToken = cookies?.accessToken;
-          return typeof accessToken === 'string' ? accessToken : null;
+          const cookieHeader = req.headers.cookie;
+          if (!cookieHeader) {
+            return null;
+          }
+
+          const tokenPair = cookieHeader
+            .split(';')
+            .map((part) => part.trim())
+            .find((part) => part.startsWith('accessToken='));
+
+          if (!tokenPair) {
+            return null;
+          }
+
+          return tokenPair.slice('accessToken='.length) || null;
         },
       ]),
       secretOrKey: process.env.JWT_SECRET || 'access_secret',
