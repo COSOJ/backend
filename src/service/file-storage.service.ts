@@ -108,17 +108,11 @@ export class FileStorageService implements OnModuleInit {
 
       const stream = Readable.from(buffer);
 
-      const uploadInfo = await this.minioClient.putObject(
-        bucket,
-        key,
-        stream,
-        buffer.length,
-        {
-          'Content-Type': mimeType,
-          'Original-Name': originalName,
-          'Upload-Date': new Date().toISOString(),
-        },
-      );
+      await this.minioClient.putObject(bucket, key, stream, buffer.length, {
+        'Content-Type': mimeType,
+        'Original-Name': originalName,
+        'Upload-Date': new Date().toISOString(),
+      });
 
       const url = await this.getFileUrl(bucket, key);
 
@@ -195,7 +189,15 @@ export class FileStorageService implements OnModuleInit {
       const chunks: Buffer[] = [];
 
       return new Promise((resolve, reject) => {
-        stream.on('data', (chunk) => chunks.push(chunk));
+        stream.on('data', (chunk: unknown) => {
+          if (Buffer.isBuffer(chunk)) {
+            chunks.push(chunk);
+            return;
+          }
+          if (typeof chunk === 'string') {
+            chunks.push(Buffer.from(chunk));
+          }
+        });
         stream.on('end', () => resolve(Buffer.concat(chunks)));
         stream.on('error', reject);
       });
@@ -290,7 +292,7 @@ export class FileStorageService implements OnModuleInit {
    * Get file extension for programming language
    */
   private getLanguageExtension(language: string): string {
-    const extensions = {
+    const extensions: Record<string, string> = {
       cpp: 'cpp',
       c: 'c',
       java: 'java',
