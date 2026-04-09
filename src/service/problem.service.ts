@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { Problem } from '../schema/Problem';
 import { CreateProblemDto } from '../dto/problem/create-problem.dto';
 
@@ -21,7 +21,9 @@ export class ProblemService {
    * Get MongoDB projection/aggregation pipeline for test cases based on user permissions
    * Filters test cases at database level for better performance
    */
-  private getTestCaseProjection(roles: string[]) {
+  private getTestCaseProjection(
+    roles: string[],
+  ): PipelineStage.AddFields | null {
     const isAdmin = this.canViewPrivate(roles);
 
     if (isAdmin) {
@@ -59,7 +61,7 @@ export class ProblemService {
     const isAdmin = this.canViewPrivate(roles);
 
     // Build aggregation pipeline
-    const pipeline: any[] = [
+    const pipeline: PipelineStage[] = [
       // Match phase: filter by visibility
       {
         $match: isAdmin ? {} : { visibility: 'public' },
@@ -77,7 +79,7 @@ export class ProblemService {
 
     // Execute aggregation and count in parallel
     const [items, total] = await Promise.all([
-      this.problemModel.aggregate(pipeline).exec(),
+      this.problemModel.aggregate<Problem>(pipeline).exec(),
       this.problemModel.countDocuments(isAdmin ? {} : { visibility: 'public' }),
     ]);
 
@@ -94,7 +96,11 @@ export class ProblemService {
     const isAdmin = this.canViewPrivate(roles);
 
     // Build aggregation pipeline for single document
-    const pipeline: any[] = [{ $match: { _id: new Types.ObjectId(id) } }];
+    const pipeline: PipelineStage[] = [
+      {
+        $match: { _id: new Types.ObjectId(id) },
+      },
+    ];
 
     // Add test case filtering for non-admin users
     const testCaseProjection = this.getTestCaseProjection(roles);
@@ -102,7 +108,7 @@ export class ProblemService {
       pipeline.push(testCaseProjection);
     }
 
-    const results = await this.problemModel.aggregate(pipeline).exec();
+    const results = await this.problemModel.aggregate<Problem>(pipeline).exec();
     const problem = results[0];
 
     if (!problem) {
