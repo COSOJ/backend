@@ -4,7 +4,6 @@ import {
   IsOptional,
   IsNumber,
   IsObject,
-  IsBoolean,
 } from 'class-validator';
 
 export interface TestCaseDto {
