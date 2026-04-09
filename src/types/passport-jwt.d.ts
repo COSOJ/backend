@@ -2,9 +2,7 @@ declare module 'passport-jwt' {
   import type { Request } from 'express';
   import type { Strategy as PassportStrategyBase } from 'passport-strategy';
 
-  export type JwtFromRequestFunction<T = Request> = (
-    req: T,
-  ) => string | null;
+  export type JwtFromRequestFunction<T = Request> = (req: T) => string | null;
 
   export interface StrategyOptions {
     jwtFromRequest: JwtFromRequestFunction;
@@ -13,7 +11,10 @@ declare module 'passport-jwt' {
   }
 
   export class Strategy extends PassportStrategyBase {
-    constructor(options: StrategyOptions, verify?: (...args: unknown[]) => void);
+    constructor(
+      options: StrategyOptions,
+      verify?: (...args: unknown[]) => void,
+    );
   }
 
   export const ExtractJwt: {
