@@ -126,8 +126,12 @@ describe('AuthController', () => {
 
     const result = controller.logout(res);
 
-    expect(res.clearCookie).toHaveBeenNthCalledWith(1, 'accessToken');
-    expect(res.clearCookie).toHaveBeenNthCalledWith(2, 'refreshToken');
+    expect((res.clearCookie as jest.Mock).mock.calls[0]).toEqual([
+      'accessToken',
+    ]);
+    expect((res.clearCookie as jest.Mock).mock.calls[1]).toEqual([
+      'refreshToken',
+    ]);
     expect(result).toEqual({ message: 'Logged out successfully' });
   });
 });
