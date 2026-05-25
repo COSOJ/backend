@@ -31,7 +31,7 @@ export class SubmissionController {
 
   private getUserId(req?: Request): string | undefined {
     const id = req?.user?._id ?? req?.user?.userId;
-    return typeof id === 'string' ? id : undefined;
+    return id ? id.toString() : undefined;
   }
 
   private getRoles(req?: Request): string[] {
