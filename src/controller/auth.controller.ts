@@ -68,8 +68,9 @@ export class AuthController {
     if (!userId) {
       throw new Error('Missing authenticated user id');
     }
-    const { accessToken, refreshToken } =
-      await this.authService.refreshTokens(userId);
+    const { accessToken, refreshToken } = await this.authService.refreshTokens(
+      userId.toString(),
+    );
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       sameSite: 'strict',
