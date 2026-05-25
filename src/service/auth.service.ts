@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { User } from '../schema/User';
 import { RegisterDto } from '../dto/auth/register.dto';
 import { LoginDto } from '../dto/auth/login.dto';
+import { appConfig } from '../config/app.config';
 
 @Injectable()
 export class AuthService {
@@ -52,10 +53,12 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
     const payload = { userId, roles: user.roles };
     const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '15m',
+      secret: appConfig.jwt.secret,
+      expiresIn: appConfig.jwt.expiresIn,
     });
     const refreshToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '7d',
+      secret: appConfig.jwt.refreshSecret,
+      expiresIn: appConfig.jwt.refreshExpiresIn,
     });
     return { accessToken, refreshToken };
   }
