@@ -1,15 +1,8 @@
 name: Readme Coverage Assistant
 
 on:
-  push:
-    branches:
-      - '**'
-  pull_request:
-    branches:
-      - '**'
   release:
-    types: [published, created, edited]
-  workflow_dispatch:
+    types: [published]
 
 permissions:
   contents: write
@@ -83,7 +76,6 @@ jobs:
           mv README.md.tmp README.md
 
       - name: Commit README coverage update
-        if: github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -97,5 +89,4 @@ jobs:
           git commit -m "[report]: update readme coverage block
 
            - for ${{ github.sha }}
-           - at ${{ github.event.head_commit.timestamp }};"
           git push
