@@ -1,8 +1,10 @@
 import { Request } from 'express';
 
+type IdLike = string | { toString(): string };
+
 interface AuthenticatedUser {
-  userId?: string | { toString(): string };
-  _id?: string | { toString(): string };
+  userId?: IdLike;
+  _id?: IdLike;
   roles?: string[];
   handle?: string;
   [key: string]: unknown;
