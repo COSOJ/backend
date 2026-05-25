@@ -11,6 +11,7 @@ export class SuperAdminBootstrapService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     const handle = 'superadmin';
     const email = 'superadmin@example.com';
+    // todo: use env variable for password
     const password = 'supersecurepassword';
     const passwordHash = await bcrypt.hash(password, 10);
 
