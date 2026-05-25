@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Request } from 'express';
 import { User } from '../schema/User';
+import { appConfig } from '../config/app.config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -30,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           return tokenPair.slice('accessToken='.length) || null;
         },
       ]),
-      secretOrKey: process.env.JWT_SECRET || 'access_secret',
+      secretOrKey: appConfig.jwt.secret,
     });
   }
 
