@@ -1,8 +1,8 @@
 import { Request } from 'express';
 
 interface AuthenticatedUser {
-  userId?: string;
-  _id?: string;
+  userId?: string | { toString(): string };
+  _id?: string | { toString(): string };
   roles?: string[];
   handle?: string;
   [key: string]: unknown;
