@@ -12,6 +12,7 @@ import {
   SubmissionQueryDto,
 } from '../dto/submission/create-submission.dto';
 import { FileStorageService } from './file-storage.service';
+import { JudgeQueue } from '../judge/judge.queue';
 
 export interface SubmissionListResponse {
   items: Submission[];
@@ -39,6 +40,7 @@ export class SubmissionService {
   constructor(
     @InjectModel(Submission.name) private submissionModel: Model<Submission>,
     private readonly fileStorageService: FileStorageService,
+    private readonly judgeQueue: JudgeQueue,
   ) {}
 
   /**
@@ -105,6 +107,9 @@ export class SubmissionService {
         );
         throw new Error('Failed to create submission');
       }
+
+      // Dispatch to the judge asynchronously; the verdict is filled in later.
+      this.judgeQueue.enqueue(created._id.toString());
 
       return populatedSubmission;
     } catch (error: unknown) {

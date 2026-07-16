@@ -8,7 +8,7 @@ import { FileController } from './controller/file.controller';
 import { AuthService } from './service/auth.service';
 import { ProblemService } from './service/problem.service';
 import { SubmissionService } from './service/submission.service';
-import { FileStorageService } from './service/file-storage.service';
+import { JudgeModule } from './judge/judge.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schema/User';
 import { Problem, ProblemSchema } from './schema/Problem';
@@ -31,6 +31,7 @@ import { appConfig } from './config/app.config';
       secret: appConfig.jwt.secret,
       signOptions: { expiresIn: appConfig.jwt.expiresIn },
     }),
+    JudgeModule,
   ],
   controllers: [
     AppController,
@@ -44,7 +45,6 @@ import { appConfig } from './config/app.config';
     AuthService,
     ProblemService,
     SubmissionService,
-    FileStorageService,
     SuperAdminBootstrapService,
     JwtStrategy,
     RefreshTokenStrategy,

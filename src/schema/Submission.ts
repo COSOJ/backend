@@ -3,6 +3,7 @@ import { Document } from 'mongoose';
 
 export enum SubmissionVerdict {
   PENDING = 'pending',
+  JUDGING = 'judging',
   ACCEPTED = 'accepted',
   WRONG_ANSWER = 'wrong_answer',
   TIME_LIMIT_EXCEEDED = 'time_limit_exceeded',
