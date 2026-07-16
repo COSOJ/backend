@@ -49,9 +49,14 @@ export const appConfig = {
     enabled: process.env.JUDGE_ENABLED !== 'false',
     // How many submissions are judged concurrently by the in-process queue.
     concurrency: parseInt(process.env.JUDGE_CONCURRENCY || '2', 10),
-    // Extra wall-clock budget on top of the problem time limit to absorb
-    // container startup overhead before a run is declared TLE.
+    // Extra wall-clock budget on top of the (scaled) problem time limit before
+    // the hard-kill watchdog fires. Absorbs container startup overhead.
     startupGraceMs: parseInt(process.env.JUDGE_STARTUP_GRACE_MS || '3000', 10),
+    // The verdict-relevant time limit is measured as CPU time. The wall-clock
+    // watchdog is only a safety net for hangs/infinite loops, so it is set to
+    // this multiple of the CPU limit (plus the startup grace) — generous enough
+    // that CPU contention under load does not cause false TLEs.
+    wallMultiplier: parseInt(process.env.JUDGE_WALL_MULTIPLIER || '4', 10),
     compileTimeoutMs: parseInt(
       process.env.JUDGE_COMPILE_TIMEOUT_MS || '20000',
       10,

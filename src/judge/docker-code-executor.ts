@@ -103,12 +103,19 @@ export class DockerCodeExecutor implements ICodeExecutor {
       .rm(path.join(program.workdir, STATS_FILE), { force: true })
       .catch(() => undefined);
 
+    // The watchdog is a generous wall-clock safety net; the real time limit is
+    // enforced on CPU time (see classify) so load-induced wall inflation does
+    // not cause false TLEs.
+    const killAfterMs =
+      limits.timeLimitMs * appConfig.judge.wallMultiplier +
+      appConfig.judge.startupGraceMs;
+
     const outcome = await this.dockerRun({
       image: spec.image,
       argv: spec.run,
       workdir: program.workdir,
       memoryLimitMb: limits.memoryLimitMb,
-      killAfterMs: limits.timeLimitMs + appConfig.judge.startupGraceMs,
+      killAfterMs,
       stdin,
       useTimeWrapper: true,
     });
@@ -119,9 +126,11 @@ export class DockerCodeExecutor implements ICodeExecutor {
 
     const stats = await this.readStats(program.workdir);
     const memoryKb = stats.memoryKb;
-    const timeMs = stats.timeMs ?? outcome.wallMs;
+    // Report CPU time as the authoritative "time used"; fall back to measured
+    // wall time only when stats are unavailable (e.g. the process was killed).
+    const timeMs = stats.cpuMs ?? stats.elapsedMs ?? outcome.wallMs;
 
-    const status = this.classify(outcome, memoryKb, limits);
+    const status = this.classify(outcome, memoryKb, stats.cpuMs, limits);
 
     return {
       status,
@@ -145,6 +154,7 @@ export class DockerCodeExecutor implements ICodeExecutor {
   private classify(
     outcome: DockerRunResult,
     memoryKb: number,
+    cpuMs: number | null,
     limits: ExecutionLimits,
   ): ExecutionStatus {
     if (outcome.timedOut) {
@@ -160,6 +170,11 @@ export class DockerCodeExecutor implements ICodeExecutor {
     }
     if (memoryKb > 0 && memoryKb > limits.memoryLimitMb * 1024) {
       return ExecutionStatus.MEMORY_LIMIT_EXCEEDED;
+    }
+    // Enforce the time limit on CPU time so a program that merely waited (CPU
+    // starved under concurrent load) is not falsely failed.
+    if (cpuMs !== null && cpuMs > limits.timeLimitMs) {
+      return ExecutionStatus.TIME_LIMIT_EXCEEDED;
     }
     if (outcome.exitCode !== 0 || outcome.signal) {
       return ExecutionStatus.RUNTIME_ERROR;
@@ -315,9 +330,11 @@ export class DockerCodeExecutor implements ICodeExecutor {
     });
   }
 
-  private async readStats(
-    workdir: string,
-  ): Promise<{ memoryKb: number; timeMs: number | null }> {
+  private async readStats(workdir: string): Promise<{
+    memoryKb: number;
+    cpuMs: number | null;
+    elapsedMs: number | null;
+  }> {
     try {
       const content = await fs.readFile(
         path.join(workdir, STATS_FILE),
@@ -325,17 +342,18 @@ export class DockerCodeExecutor implements ICodeExecutor {
       );
       return this.parseTimeV(content);
     } catch {
-      return { memoryKb: 0, timeMs: null };
+      return { memoryKb: 0, cpuMs: null, elapsedMs: null };
     }
   }
 
   /** Parse the output of `/usr/bin/time -v`. */
   private parseTimeV(content: string): {
     memoryKb: number;
-    timeMs: number | null;
+    cpuMs: number | null;
+    elapsedMs: number | null;
   } {
     let memoryKb = 0;
-    let timeMs: number | null = null;
+    let elapsedMs: number | null = null;
 
     const memMatch = content.match(
       /Maximum resident set size \(kbytes\):\s*(\d+)/,
@@ -348,10 +366,20 @@ export class DockerCodeExecutor implements ICodeExecutor {
       /Elapsed \(wall clock\) time[^:]*:\s*([0-9:.]+)/,
     );
     if (elapsedMatch) {
-      timeMs = this.parseElapsedToMs(elapsedMatch[1]);
+      elapsedMs = this.parseElapsedToMs(elapsedMatch[1]);
     }
 
-    return { memoryKb, timeMs };
+    // CPU time = user + system time; this is what the time limit is enforced on.
+    const userMatch = content.match(/User time \(seconds\):\s*([0-9.]+)/);
+    const sysMatch = content.match(/System time \(seconds\):\s*([0-9.]+)/);
+    let cpuMs: number | null = null;
+    if (userMatch || sysMatch) {
+      const user = userMatch ? parseFloat(userMatch[1]) : 0;
+      const sys = sysMatch ? parseFloat(sysMatch[1]) : 0;
+      cpuMs = Math.round((user + sys) * 1000);
+    }
+
+    return { memoryKb, cpuMs, elapsedMs };
   }
 
   private parseElapsedToMs(value: string): number {
