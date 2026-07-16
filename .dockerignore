@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+coverage
+test
+.github
+*.log
+.git
+.gitignore
+lefthook.yml
