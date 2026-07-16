@@ -41,4 +41,21 @@ export const appConfig = {
       'application/javascript',
     ],
   },
+  judge: {
+    // When false, submissions are accepted but never dispatched to the sandbox
+    // (useful for environments without a Docker daemon).
+    enabled: process.env.JUDGE_ENABLED !== 'false',
+    // How many submissions are judged concurrently by the in-process queue.
+    concurrency: parseInt(process.env.JUDGE_CONCURRENCY || '2', 10),
+    // Extra wall-clock budget on top of the problem time limit to absorb
+    // container startup overhead before a run is declared TLE.
+    startupGraceMs: parseInt(process.env.JUDGE_STARTUP_GRACE_MS || '3000', 10),
+    compileTimeoutMs: parseInt(
+      process.env.JUDGE_COMPILE_TIMEOUT_MS || '20000',
+      10,
+    ),
+    compileMemoryMb: parseInt(process.env.JUDGE_COMPILE_MEMORY_MB || '512', 10),
+    pidsLimit: parseInt(process.env.JUDGE_PIDS_LIMIT || '256', 10),
+    dockerBinary: process.env.JUDGE_DOCKER_BINARY || 'docker',
+  },
 };
