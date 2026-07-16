@@ -1,6 +1,49 @@
 # backend
 
+COSOJ API (NestJS + MongoDB + MinIO) including the **judge**: submissions are
+compiled and run against a problem's test cases in sandboxed Docker containers,
+and a verdict (Accepted / Wrong Answer / TLE / MLE / Runtime Error /
+Compilation Error) is computed and stored.
+
+## Architecture
+
+- `src/service` — auth, problems, submissions, file storage (MinIO).
+- `src/judge` — the judging subsystem:
+  - `LanguageRegistry` — language → image + compile/run commands.
+  - `OutputComparator` — result matching (token / exact).
+  - `ICodeExecutor` + `DockerCodeExecutor` — the sandbox abstraction and its
+    Docker implementation (time/memory/pids/network limits).
+  - `JudgeService` — compile-once, run-each-case, aggregate verdict.
+  - `JudgeQueue` — bounded-concurrency async dispatch.
+
+When a submission is created it is uploaded to MinIO and enqueued; the queue
+judges it asynchronously and fills in the verdict. Clients poll
+`GET /submissions/:id`.
+
+## Running
+
+```bash
+pnpm install
+pnpm start:dev        # needs MongoDB + MinIO (see ../infra) and a Docker daemon
+```
+
+The judge shells out to `docker` and requires the `cosoj-judge-*` images
+(build them with `../judge/build-images.sh`). Set `JUDGE_ENABLED=false` to accept
+submissions without judging (e.g. on hosts without Docker). Key env vars:
+`MONGODB_URI`, `MINIO_*`, `JWT_*`, `JUDGE_CONCURRENCY`, `JUDGE_WORKDIR`.
+
 ## Test
+
+```bash
+pnpm test                                   # unit tests (no Docker needed)
+RUN_DOCKER_JUDGE_TESTS=1 pnpm test          # + real Docker judge integration tests
+pnpm test:e2e                               # end-to-end against a running stack
+```
+
+The judge integration tests (`src/judge/docker-code-executor.integration.spec.ts`)
+run real submissions through the actual sandbox images and are skipped unless
+`RUN_DOCKER_JUDGE_TESTS=1` is set.
+
 ### Coverage
 <!-- start test coverage -->
 
