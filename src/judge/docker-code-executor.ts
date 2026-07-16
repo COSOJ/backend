@@ -53,6 +53,9 @@ export class DockerCodeExecutor implements ICodeExecutor {
     const base = appConfig.judge.workdir;
     await fs.mkdir(base, { recursive: true });
     const workdir = await fs.mkdtemp(path.join(base, 'cosoj-judge-'));
+    // The sandbox runs as a non-root user, so it must be able to write compiled
+    // artifacts and the timing stats file into the mounted workspace.
+    await fs.chmod(workdir, 0o777);
     await fs.writeFile(path.join(workdir, spec.sourceFilename), sourceCode);
 
     const program: PreparedProgram = { id: uuidv4(), language, workdir };
