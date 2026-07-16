@@ -1,3 +1,5 @@
+import * as os from 'os';
+
 export const appConfig = {
   database: {
     uri:
@@ -57,5 +59,10 @@ export const appConfig = {
     compileMemoryMb: parseInt(process.env.JUDGE_COMPILE_MEMORY_MB || '512', 10),
     pidsLimit: parseInt(process.env.JUDGE_PIDS_LIMIT || '256', 10),
     dockerBinary: process.env.JUDGE_DOCKER_BINARY || 'docker',
+    // Base directory for per-run sandbox workspaces. When the backend runs in a
+    // container and spawns sibling judge containers via the host's docker
+    // socket, this MUST be a path that is bind-mounted at the SAME location on
+    // both the host and the backend container, so `docker run -v` resolves it.
+    workdir: process.env.JUDGE_WORKDIR || os.tmpdir(),
   },
 };

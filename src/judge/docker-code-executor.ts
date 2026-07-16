@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { appConfig } from '../config/app.config';
@@ -51,7 +50,9 @@ export class DockerCodeExecutor implements ICodeExecutor {
     sourceCode: string,
   ): Promise<PrepareResult> {
     const spec = this.registry.get(language);
-    const workdir = await fs.mkdtemp(path.join(os.tmpdir(), 'cosoj-judge-'));
+    const base = appConfig.judge.workdir;
+    await fs.mkdir(base, { recursive: true });
+    const workdir = await fs.mkdtemp(path.join(base, 'cosoj-judge-'));
     await fs.writeFile(path.join(workdir, spec.sourceFilename), sourceCode);
 
     const program: PreparedProgram = { id: uuidv4(), language, workdir };
