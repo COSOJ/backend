@@ -24,6 +24,22 @@ export class CreateSubmissionDto {
   code: string;
 }
 
+export class RunCodeDto {
+  @IsEnum(ProgrammingLanguage)
+  language: ProgrammingLanguage;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(1, { message: 'Code cannot be empty' })
+  @MaxLength(50000, { message: 'Code is too long (max 50,000 characters)' })
+  code: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100000, { message: 'Input is too long (max 100,000 characters)' })
+  stdin?: string;
+}
+
 export class SubmissionQueryDto {
   @IsOptional()
   @IsString()

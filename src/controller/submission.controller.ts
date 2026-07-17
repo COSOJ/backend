@@ -18,16 +18,25 @@ import { RolesGuard } from '../guard/RolesGuard';
 import { Roles } from '../decorator/roles.decorator';
 import { DisableCache } from '../decorator/no-cache.decorator';
 import { SubmissionService } from '../service/submission.service';
+import { JudgeService } from '../judge/judge.service';
 import {
   CreateSubmissionDto,
+  RunCodeDto,
   SubmissionQueryDto,
 } from '../dto/submission/create-submission.dto';
 import { SubmissionVerdict, ProgrammingLanguage } from '../schema/Submission';
 import { Request } from 'express';
 
+// Bounds for interactive "Run" (custom input), independent of any problem.
+const RUN_TIME_LIMIT_MS = 5000;
+const RUN_MEMORY_LIMIT_MB = 256;
+
 @Controller('submissions')
 export class SubmissionController {
-  constructor(private readonly submissionService: SubmissionService) {}
+  constructor(
+    private readonly submissionService: SubmissionService,
+    private readonly judgeService: JudgeService,
+  ) {}
 
   private getUserId(req?: Request): string | undefined {
     const id = req?.user?._id ?? req?.user?.userId;
@@ -47,6 +56,20 @@ export class SubmissionController {
       throw new UnauthorizedException('Authentication required');
     }
     return this.submissionService.create(dto, userId);
+  }
+
+  @Post('run')
+  @UseGuards(JwtAuthGuard)
+  @DisableCache()
+  async run(@Body() dto: RunCodeDto, @Req() req: Request) {
+    const userId = this.getUserId(req);
+    if (!userId) {
+      throw new UnauthorizedException('Authentication required');
+    }
+    return this.judgeService.runOnce(dto.language, dto.code, dto.stdin ?? '', {
+      timeLimitMs: RUN_TIME_LIMIT_MS,
+      memoryLimitMb: RUN_MEMORY_LIMIT_MB,
+    });
   }
 
   @Get()

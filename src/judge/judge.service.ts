@@ -31,6 +31,15 @@ export interface JudgeOutcome {
   errorMessage?: string;
 }
 
+/** Result of a single ad-hoc run against custom input (the "Run" button). */
+export interface RunOnceResult {
+  status: ExecutionStatus;
+  stdout: string;
+  stderr: string;
+  timeMs: number;
+  memoryKb: number;
+}
+
 const MAX_ERROR_LENGTH = 4000;
 
 /**
@@ -197,6 +206,41 @@ export class JudgeService {
       };
     } finally {
       await this.executor.cleanup(program);
+    }
+  }
+
+  /**
+   * Compile and run the program once against custom input, without any test
+   * cases or persistence. Powers the interactive "Run" button.
+   */
+  async runOnce(
+    language: ProgrammingLanguage,
+    code: string,
+    stdin: string,
+    limits: ExecutionLimits,
+  ): Promise<RunOnceResult> {
+    const prep = await this.executor.prepare(language, code);
+    if (!prep.compile.success || !prep.program) {
+      return {
+        status: ExecutionStatus.COMPILE_ERROR,
+        stdout: '',
+        stderr: this.truncate(prep.compile.stderr),
+        timeMs: 0,
+        memoryKb: 0,
+      };
+    }
+
+    try {
+      const result = await this.executor.run(prep.program, stdin, limits);
+      return {
+        status: result.status,
+        stdout: result.stdout,
+        stderr: this.truncate(result.stderr),
+        timeMs: result.timeMs,
+        memoryKb: result.memoryKb,
+      };
+    } finally {
+      await this.executor.cleanup(prep.program);
     }
   }
 

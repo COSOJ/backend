@@ -220,6 +220,64 @@ describe('JudgeService.evaluate', () => {
   });
 });
 
+describe('JudgeService.runOnce', () => {
+  let executor: StubExecutor;
+  let service: JudgeService;
+
+  beforeEach(() => {
+    executor = new StubExecutor();
+    service = new JudgeService(
+      {} as never,
+      {} as never,
+      {} as never,
+      executor,
+      new OutputComparator(),
+    );
+  });
+
+  it('returns ok status with stdout for a successful run', async () => {
+    executor.runResults = [okRun('hello', 12, 2048)];
+    const result = await service.runOnce(
+      ProgrammingLanguage.PYTHON,
+      'print("hello")',
+      '',
+      LIMITS,
+    );
+    expect(result.status).toBe(ExecutionStatus.OK);
+    expect(result.stdout).toBe('hello');
+    expect(result.timeMs).toBe(12);
+    expect(result.memoryKb).toBe(2048);
+    expect(executor.cleanupCalls).toBe(1);
+  });
+
+  it('returns compile_error status when compilation fails', async () => {
+    executor.compileSuccess = false;
+    executor.compileStderr = 'error: bad';
+    const result = await service.runOnce(
+      ProgrammingLanguage.CPP,
+      'bad',
+      '',
+      LIMITS,
+    );
+    expect(result.status).toBe(ExecutionStatus.COMPILE_ERROR);
+    expect(result.stderr).toContain('error: bad');
+    expect(executor.runCalls).toBe(0);
+  });
+
+  it('passes stdin through and cleans up even on runtime error', async () => {
+    executor.runResults = [failRun(ExecutionStatus.RUNTIME_ERROR, 'boom')];
+    const result = await service.runOnce(
+      ProgrammingLanguage.PYTHON,
+      'code',
+      '42\n',
+      LIMITS,
+    );
+    expect(result.status).toBe(ExecutionStatus.RUNTIME_ERROR);
+    expect(result.stderr).toContain('boom');
+    expect(executor.cleanupCalls).toBe(1);
+  });
+});
+
 describe('JudgeService.judge', () => {
   let executor: StubExecutor;
 
