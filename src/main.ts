@@ -4,9 +4,9 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { developmentConfig } from './config/development.config';
+import { appConfig } from './config/app.config';
 
-// todo: use config file to handle our sites only
-const allowedOrigins = ['http://localhost:5173'];
+const allowedOrigins = appConfig.app.cors.origin.split(',').map((origin) => origin.trim());
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
